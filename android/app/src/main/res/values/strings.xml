@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kampus</string>
+    <string name="title_activity_main">Kampus</string>
+    <string name="package_name">com.harsh.kampus</string>
+    <string name="custom_url_scheme">com.harsh.kampus</string>
+</resources>
