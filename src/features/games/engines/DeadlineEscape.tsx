@@ -303,7 +303,7 @@ export function DeadlineEscape({
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 1.4, opacity: 0 }}
-              className="absolute top-24 left-1/2 z-50 -translate-x-1/2 rounded-full border border-yellow-400/40 bg-yellow-400/20 px-5 py-2 text-sm font-black tracking-widest text-yellow-300 backdrop-blur-xl"
+              className="absolute top-24 left-1/2 z-50 -translate-x-1/2 rounded-full border border-yellow-400/40 bg-yellow-400/20 px-5 py-2 text-sm font-black tracking-widest text-yellow-300 backdrop-blur-sm"
             >
               ⚠ SPEED UP
             </motion.div>
@@ -352,7 +352,7 @@ export function DeadlineEscape({
                 top: `${o.y}%`,
                 transform: "translate(-50%, -50%)",
               }}
-              className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-bold backdrop-blur-xl ${
+              className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-bold backdrop-blur-sm ${
                 o.type === "deadline"
                   ? "bg-red-500/90 shadow-[0_0_30px_rgba(239,68,68,0.8)]"
                   : "bg-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.8)]"
@@ -387,14 +387,14 @@ export function DeadlineEscape({
         <div className="absolute bottom-0 left-0 right-0 z-20 flex">
           <button
             onClick={() => move(-1)}
-            className="flex-1 h-24 border-r border-cyan-400/10 bg-black/20 text-3xl font-black text-cyan-200 backdrop-blur-xl active:bg-cyan-400/10"
+            className="flex-1 h-24 border-r border-cyan-400/10 bg-black/20 text-3xl font-black text-cyan-200 backdrop-blur-sm active:bg-cyan-400/10"
           >
             ←
           </button>
 
           <button
             onClick={() => move(1)}
-            className="flex-1 h-24 bg-black/20 text-3xl font-black text-cyan-200 backdrop-blur-xl active:bg-cyan-400/10"
+            className="flex-1 h-24 bg-black/20 text-3xl font-black text-cyan-200 backdrop-blur-sm active:bg-cyan-400/10"
           >
             →
           </button>

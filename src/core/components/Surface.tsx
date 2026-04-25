@@ -9,7 +9,7 @@ interface SurfaceProps {
   as?: "div" | "button";
 }
 
-export function Surface({ children, className, variant = "glass", onClick, as = "div" }: SurfaceProps) {
+export function Surface({ children, className, variant = "flat", onClick, as = "div" }: SurfaceProps) {
   const base =
     variant === "glass"
       ? "surface-glass"

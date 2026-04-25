@@ -223,7 +223,7 @@ function Dashboard() {
 
       {/* Greeting subtitle */}
       <div className="pt-2 pb-4 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-        {timeOfDayGreeting()} · StudentOS
+        {timeOfDayGreeting()} · Kampus
       </div>
     </div>
   );

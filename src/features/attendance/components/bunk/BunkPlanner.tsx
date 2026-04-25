@@ -334,7 +334,7 @@ function FloatingProjection({ baseAvg, projAvg, target }: { baseAvg: number; pro
         className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-30 px-3 pointer-events-none"
       >
         <div
-          className="mx-auto max-w-md rounded-full surface-glass px-4 py-2.5 backdrop-blur-xl pointer-events-auto"
+          className="mx-auto max-w-md rounded-full surface-glass px-4 py-2.5 backdrop-blur-sm pointer-events-auto"
           style={{
             border: `1px solid ${safe ? "color-mix(in oklab, var(--success) 50%, transparent)" : "color-mix(in oklab, var(--destructive) 50%, transparent)"}`,
             boxShadow: safe ? "0 0 24px color-mix(in oklab, var(--success) 35%, transparent)" : "0 0 24px color-mix(in oklab, var(--destructive) 35%, transparent)",
