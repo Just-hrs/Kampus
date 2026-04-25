@@ -7,9 +7,14 @@ workflows:
       node: 20
 
     scripts:
+      - name: Enable pnpm
+        script: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
       - name: Install dependencies
         script: |
-          pnpm install
+          pnpm install --no-frozen-lockfile
 
       - name: Build web app
         script: |
@@ -22,6 +27,7 @@ workflows:
       - name: Build APK
         script: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
 
     artifacts:
