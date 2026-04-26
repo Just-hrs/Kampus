@@ -110,12 +110,16 @@ export function dayAttendance(
   return { dateISO, weekday, records };
 }
 
-export function isoToday(): string {
-  return new Date().toISOString().slice(0, 10);
+export function isoFromDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
-export function isoFromDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+export function isoToday(): string {
+  return isoFromDate(new Date());
 }
 
 export function dateFromISO(iso: string): Date {

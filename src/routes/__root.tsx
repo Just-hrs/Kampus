@@ -59,7 +59,18 @@ const themeBootstrap = `
 `;
 
 
-//amma
+// //amma
+// function RootShell({ children }: { children: React.ReactNode }) {
+//   return (
+//     <>
+//       <HeadContent />
+//       <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+//       {children}
+//       <Scripts />
+//     </>
+//   );
+// }
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <>
@@ -70,21 +81,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
     </>
   );
 }
-
-// function RootShell({ children }: { children: React.ReactNode }) {
-//   return (
-//     <html lang="en" className="theme-neon">
-//       <head>
-//         <HeadContent />
-//         <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
-//       </head>
-//       <body>
-//         {children}
-//         <Scripts />
-//       </body>
-//     </html>
-//   );
-// }
 
 function RootComponent() {
   return (

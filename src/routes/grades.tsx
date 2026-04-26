@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useStore } from "@/core/store";
@@ -22,8 +22,8 @@ export const Route = createFileRoute("/grades")({
 function GradesPage() {
   const hydrated = useHydrated();
   const semesters = useStore((s) => s.semesters);
-  const activeId = useStore((s) => s.activeSemesterId);
-  const setActive = useStore((s) => s.setActiveSemester);
+  //const activeId = useStore((s) => s.activeSemesterId);
+  //const setActive = useStore((s) => s.setActiveSemester);
   const totalSemesters = useStore((s) => s.settings.totalSemesters);
   const addSemester = useStore((s) => s.addSemester);
 
@@ -33,9 +33,15 @@ function GradesPage() {
     () => semesters.slice().sort((a, b) => a.number - b.number),
     [semesters],
   );
+
+  const globalSemesterId = useStore((s) => s.activeSemesterId);
+  const [selectedSemesterId, setSelectedSemesterId] = useState(
+    globalSemesterId
+  );
+
   const activeSem = useMemo(
-    () => semesters.find((s) => s.id === activeId),
-    [semesters, activeId],
+    () => semesters.find((s) => s.id === selectedSemesterId),
+    [semesters, selectedSemesterId],
   );
 
   return (
@@ -68,13 +74,13 @@ function GradesPage() {
         role="tablist"
         aria-label="Semesters"
       >
-        <SemPill label="All" active={!activeId} onClick={() => setActive(null)} />
+        <SemPill label="All" active={selectedSemesterId === null} onClick={() => setSelectedSemesterId(null)}/>
         {sortedSems.map((sem) => (
           <SemPill
             key={sem.id}
             label={`Sem ${sem.number}`}
-            active={activeId === sem.id}
-            onClick={() => setActive(sem.id)}
+            active={selectedSemesterId === sem.id}
+            onClick={() => setSelectedSemesterId(sem.id)}
             sgpa={calcSGPA(sem)}
           />
         ))}

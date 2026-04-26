@@ -1,0 +1,671 @@
+# KAMPUS / STUDENTOS — MASTER PROJECT SNAPSHOT
+pnpm config set registry https://registry.npmjs.org
+## PROJECT IDENTITY
+
+Kampus (formerly StudentOS) is a mobile-native, offline-first college lifestyle OS built using React + Vite + Capacitor Android.
+
+Core philosophy:
+
+* not a productivity app
+* not a generic attendance tracker
+* intended as a “daily college companion”
+* combines academics, attendance, grades, expenses, humor, anxiety culture, mini-games, and insights
+* optimized primarily for Android phones
+
+The app is installable as an APK using Capacitor.
+
+---
+
+# CURRENT STATUS
+
+## Build System
+
+* APK builds successfully using Codemagic
+* GitHub repo connected to Codemagic
+* using pnpm
+* Capacitor v6
+* Android builds work
+
+## Current Major Milestone
+
+Android rendering corruption/glitching was mostly fixed.
+
+Root cause:
+
+* heavy glassmorphism + Framer Motion + Android WebView GPU compositing
+
+Critical fix:
+File:
+src/core/components/Surface.tsx
+
+Changed default:
+variant = "glass"
+
+to:
+variant = "flat"
+
+Result:
+
+* UI became stable
+* glitch accumulation mostly disappeared
+* dashboard stability improved
+* Android WebView rendering corruption reduced heavily
+
+Important:
+
+* Keep flat surfaces as default on Android
+* glass effects should remain minimal and isolated
+
+---
+
+# TECH STACK
+
+## Frontend
+
+* React 19
+* TypeScript
+* Vite 7
+* TailwindCSS v4
+* Framer Motion
+
+## Routing
+
+* TanStack Router
+* generated route tree architecture
+
+## State Management
+
+* Zustand
+
+## Persistence
+
+* IndexedDB using `idb`
+
+## UI
+
+* shadcn/ui
+* Radix UI primitives
+
+## Charts
+
+* Recharts
+
+## Mobile Wrapper
+
+* Capacitor Android v6
+
+## Build + CI
+
+* pnpm
+* Codemagic
+
+---
+
+# ARCHITECTURE OVERVIEW
+
+Android Device
+↓
+Capacitor Android
+↓
+Android WebView
+↓
+React App
+↓
+TanStack Router
+↓
+AppShell
+↓
+Feature Modules
+↓
+Zustand Store
+↓
+IndexedDB Persistence
+
+---
+
+# PROJECT STRUCTURE
+
+## Core Layer
+
+src/core/*
+
+Contains:
+
+* AppShell
+* navigation
+* Surface abstraction
+* storage
+* global hooks
+* shared utilities
+
+Important files:
+src/core/components/AppShell.tsx
+src/core/components/BottomNav.tsx
+src/core/components/Surface.tsx
+src/core/storage/db.ts
+src/core/store/index.ts
+
+---
+
+## Feature Layer
+
+src/features/*
+
+Current modules:
+
+* attendance
+* grades
+* games
+* expenses
+* insights
+* settings
+
+Each feature usually contains:
+
+* components/
+* logic.ts
+* calculators
+* engines
+* helpers
+
+---
+
+# ROUTING SYSTEM
+
+Uses TanStack Router.
+
+Main files:
+src/router.tsx
+src/routes/*
+src/routeTree.gen.ts
+
+Route flow:
+main.tsx
+↓
+router.tsx
+↓
+__root.tsx
+↓
+AppShell
+↓
+routes/*
+
+Current routes:
+
+* attendance
+* bunk
+* expenses
+* games
+* grades
+* insights
+* settings
+* timetable
+* onboarding
+
+---
+
+# ROOT APP SYSTEM
+
+File:
+src/routes/__root.tsx
+
+Responsibilities:
+
+* app shell mounting
+* head/meta injection
+* theme bootstrap
+* root layout
+* not found screen
+
+Theme boot system:
+
+* uses inline script (`themeBootstrap`)
+* reads `localStorage`
+* applies theme class before hydration
+* prevents theme flash during startup
+
+---
+
+# STATE MANAGEMENT
+
+Global Zustand store:
+src/core/store/index.ts
+
+Main slices:
+
+* semesters
+* attendance
+* schedule
+* expenses
+* games
+* settings
+* streaks
+* ui
+
+Hydration:
+
+* async hydration from IndexedDB
+* gated by:
+  hydrated: boolean
+
+Persistence:
+
+* debounced IndexedDB persistence
+* 250ms debounce
+
+---
+
+# STORAGE SYSTEM
+
+File:
+src/core/storage/db.ts
+
+Database:
+studentos
+
+Stores:
+
+* grades
+* attendance
+* expenses
+* games
+* settings
+* streaks
+* meta
+
+Architecture:
+
+* offline-first
+* resilient storage
+* failures never crash UI
+* import/export supported
+
+---
+
+# ATTENDANCE SYSTEM
+
+Feature path:
+src/features/attendance/*
+
+Key files:
+AttendanceCalendar.tsx
+SubjectManager.tsx
+planner.ts
+logic.ts
+bunk-logic.ts
+
+Bunk planner modes:
+
+* SafeMode
+* RecoveryMode
+* SurvivalMode
+* YoloMode
+
+Attendance model currently supports:
+
+* attendance records
+* schedules
+* holidays
+* extra classes
+* subject start/end dates
+
+Important attendance structures:
+
+* holidayOverrides
+* extraClasses
+* startDateISO
+* endDateISO
+
+Attendance records use:
+${dateISO}_${subjectId}
+
+---
+
+# GRADES SYSTEM
+
+Feature path:
+src/features/grades/*
+
+Includes:
+
+* SGPA/CGPA logic
+* radar charts
+* semester comparison
+* target analysis
+* subject graphs
+
+Key components:
+
+* RadarChart
+* SGPAChart
+* GradeRing
+* SemesterComparison
+* TargetPanel
+
+---
+
+# GAMES SYSTEM
+
+Feature path:
+src/features/games/*
+
+Mini-games implemented as isolated engines:
+
+* AnxietyTap
+* DeadlineEscape
+* CollegeSim
+* BrainRotRoulette
+* AllNighter
+
+Game stats stored globally.
+
+---
+
+# SETTINGS SYSTEM
+
+Feature path:
+src/features/settings/*
+
+Current settings include:
+
+* theme
+* haptics
+* sounds
+* notifications
+* attendanceTarget
+* currency
+
+Themes:
+
+* neon
+* matte
+* pop
+* focus
+
+---
+
+# HOOK SYSTEM
+
+Global hooks:
+src/core/hooks/*
+
+Includes:
+
+* useHaptics.ts
+* useHydrated.ts
+* useMediaQuery.ts
+
+Purpose:
+
+* Capacitor integrations
+* hydration gating
+* responsive logic
+
+---
+
+# UI SYSTEM
+
+Two-layer UI architecture.
+
+## Layer 1 — shadcn/Radix primitives
+
+src/components/ui/*
+
+Examples:
+
+* button
+* dialog
+* tabs
+* sheet
+* card
+* select
+* tooltip
+
+These are mostly low-level reusable primitives.
+
+## Layer 2 — custom app components
+
+src/core/components/*
+
+Examples:
+
+* AppShell
+* Surface
+* BottomNav
+* TopBar
+* RingProgress
+
+These contain app-specific rendering behavior.
+
+---
+
+# CURRENT KNOWN ISSUES
+
+## 1. Semester Coupling Bug
+
+Problem:
+Selecting semester in Grades automatically changes Attendance semester.
+
+Root cause:
+Global shared state:
+activeSemesterId
+
+Current architecture:
+Grades and Attendance both mutate the same semester pointer.
+
+Important:
+This is NOT a rendering bug.
+This is a state architecture issue.
+
+---
+
+## 2. Calendar Logic Bug
+
+Observed:
+Mondays displayed as holidays with incorrect "Sunday/chhutti" logic.
+
+Likely cause:
+Incorrect weekday indexing.
+
+Reminder:
+JavaScript:
+0 = Sunday
+1 = Monday
+
+---
+
+## 3. Android Back Button
+
+Currently not fully handled.
+
+Desired behavior:
+
+* close sheets/dialogs first
+* navigate backward in-app
+* avoid immediate app exit
+
+---
+
+# CURRENT DESIGN PHILOSOPHY
+
+The app intentionally mixes:
+
+* academics
+* stress culture
+* humor
+* dopamine systems
+* emotional relatability
+* utility
+
+Tone is intentionally:
+
+* chaotic
+* funny
+* student-native
+* meme-aware
+* emotionally relatable
+
+Not intended to feel corporate.
+
+---
+
+# IMPORTANT ANDROID NOTES
+
+Android WebView performance is a major constraint.
+
+Avoid excessive:
+
+* backdrop blur
+* glassmorphism
+* huge shadows
+* nested opacity
+* animated translucent layers
+* heavy GPU compositing
+
+Framer Motion + glass effects caused major instability earlier.
+
+Flat UI is significantly more stable.
+
+---
+
+# CURRENT DATA FLOW
+
+User Action
+↓
+Route Component
+↓
+Feature Component
+↓
+Logic.ts
+↓
+Zustand Store
+↓
+IndexedDB persistence
+↓
+UI rerender
+
+---
+
+# BUILD / APK FLOW
+
+GitHub
+↓
+Codemagic
+↓
+pnpm build
+↓
+dist/
+↓
+Capacitor sync
+↓
+Android Gradle Build
+↓
+APK
+
+---
+
+# IMPORTANT FILES
+
+Core:
+
+* src/core/store/index.ts
+* src/core/storage/db.ts
+* src/core/components/Surface.tsx
+* src/core/components/AppShell.tsx
+
+Routing:
+
+* src/router.tsx
+* src/routes/__root.tsx
+
+Attendance:
+
+* src/features/attendance/logic.ts
+* src/features/attendance/planner.ts
+* src/features/attendance/bunk-logic.ts
+
+Grades:
+
+* src/features/grades/logic.ts
+
+---
+
+# CURRENT PRODUCT DIRECTION
+
+Kampus is evolving from:
+"student utility app"
+
+toward:
+"offline-first college operating system"
+
+Main future concerns:
+
+* Android optimization
+* scalable state boundaries
+* semester architecture
+* UX consistency
+* feature coupling
+* smarter attendance analytics
+* usage insights
+* telemetry
+* engagement systems
+
+The app is no longer a toy React project.
+It is now entering product-scale architecture territory.
+
+---
+
+# IMPORTANT CONTEXT FOR FUTURE CHATS
+
+If debugging Android:
+
+* assume WebView compositor limitations first
+* prefer flat UI
+* avoid blaming routing/store immediately
+
+If debugging semester issues:
+
+* check shared Zustand state
+* especially `activeSemesterId`
+
+If debugging persistence:
+
+* hydration is async
+* app depends heavily on IndexedDB restore
+
+If debugging UI:
+
+* Surface.tsx is extremely important
+* many rendering behaviors originate there
+
+If debugging navigation:
+
+* AppShell + TanStack Router control most flow
+
+If adding analytics/telemetry:
+
+* app is currently fully offline-first
+* no backend yet
+* no cloud sync yet
+* no authentication system yet
+
+---
+
+# PROJECT PERSONALITY
+
+This app is intentionally:
+
+* emotionally expressive
+* anti-corporate
+* funny
+* student-chaotic
+* hyper-relatable
+
+It should NOT feel like:
+
+* LinkedIn
+* Notion clone
+* corporate productivity SaaS
+* sterile educational ERP software
+
+The emotional layer is part of the product identity.
