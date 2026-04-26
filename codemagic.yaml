@@ -5,19 +5,13 @@ workflows:
 
     environment:
       node: 20
-      java: 17
+      java: 21
 
     scripts:
       - name: Install dependencies
         script: |
           npm install -g pnpm --force
           pnpm install --no-frozen-lockfile
-
-      # 🔥 CLEAN FIRST (before anything touches Gradle)
-      - name: Clean Gradle cache
-        script: |
-          rm -rf ~/.gradle/caches
-          rm -rf ~/.gradle/wrapper
 
       - name: Build web app
         script: |
@@ -32,7 +26,7 @@ workflows:
           cd android
           chmod +x gradlew
           ./gradlew clean
-          ./gradlew assembleDebug --no-daemon --stacktrace --refresh-dependencies
+          ./gradlew assembleDebug --no-daemon --stacktrace --warning-mode all
 
     artifacts:
       - android/app/build/outputs/**/*.apk
