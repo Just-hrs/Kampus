@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Flame, Settings as SettingsIcon, Gamepad2 } from "lucide-react";
+import { Flame, Settings as SettingsIcon, Gamepad2, Sparkles } from "lucide-react";
 import { useStore } from "@/core/store";
 import { useHydrated } from "@/core/hooks/useHydrated";
 import { timeOfDayGreeting } from "@/core/lib/utils";
@@ -9,8 +9,8 @@ const TITLES: Record<string, string> = {
   "/grades": "Grades",
   "/attendance": "Attendance",
   "/expenses": "Expenses",
-  "/insights": "Insights",
   "/games": "Game Center",
+  "/insights": "Insights",
   "/settings": "Settings",
 };
 
@@ -42,11 +42,11 @@ export function TopBar() {
           </div>
         )}
         <Link
-          to="/games"
+          to="/insights"
           className="surface-glass flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Game Center"
+          aria-label="Insights"
         >
-          <Gamepad2 size={16} />
+          <Sparkles size={16} />
         </Link>
         <Link
           to="/settings"

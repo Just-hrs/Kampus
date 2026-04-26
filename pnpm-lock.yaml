@@ -11,12 +11,21 @@ importers:
       '@capacitor/android':
         specifier: ^6.2.1
         version: 6.2.1(@capacitor/core@6.2.1)
+      '@capacitor/app':
+        specifier: ^6.0.3
+        version: 6.0.3(@capacitor/core@6.2.1)
       '@capacitor/cli':
         specifier: ^6.2.1
         version: 6.2.1
       '@capacitor/core':
         specifier: ^6.2.1
         version: 6.2.1
+      '@capacitor/filesystem':
+        specifier: ^6.0.4
+        version: 6.0.4(@capacitor/core@6.2.1)
+      '@capacitor/share':
+        specifier: ^6.0.4
+        version: 6.0.4(@capacitor/core@6.2.1)
       '@cloudflare/vite-plugin':
         specifier: ^1.25.5
         version: 1.33.1(vite@7.3.2(@types/node@22.19.17)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0))(workerd@1.20260421.1)(wrangler@4.84.1)
@@ -338,6 +347,11 @@ packages:
     peerDependencies:
       '@capacitor/core': ^6.2.0
 
+  '@capacitor/app@6.0.3':
+    resolution: {integrity: sha512-4gFUCbcVz0N/YYN32OBFerocWXslIv3Nc90gDiRsBkJc0plwK6kIUT6PKa5WtW2kfhteUeCVXQbvArH2fH+0Ug==}
+    peerDependencies:
+      '@capacitor/core': ^6.0.0
+
   '@capacitor/cli@6.2.1':
     resolution: {integrity: sha512-JKl0FpFge8PgQNInw12kcKieQ4BmOyazQ4JGJOfEpVXlgrX1yPhSZTPjngupzTCiK3I7q7iGG5kjun0fDqgSCA==}
     engines: {node: '>=18.0.0'}
@@ -345,6 +359,16 @@ packages:
 
   '@capacitor/core@6.2.1':
     resolution: {integrity: sha512-urZwxa7hVE/BnA18oCFAdizXPse6fCKanQyEqpmz6cBJ2vObwMpyJDG5jBeoSsgocS9+Ax+9vb4ducWJn0y2qQ==}
+
+  '@capacitor/filesystem@6.0.4':
+    resolution: {integrity: sha512-eFlg/ZrwYA4Y6ClLRRikudVu2XvuZxfX/XC0ky9MgfbC9dyqTnVkkEoWM6vr1xR89YNY4mB0EeVTet1m1Jcumw==}
+    peerDependencies:
+      '@capacitor/core': ^6.0.0
+
+  '@capacitor/share@6.0.4':
+    resolution: {integrity: sha512-Ij8C3as4n6L+SUj3M1ko+DGIsrDw2VTkn5Y/pQnFRI9dRk6YoSpGKLN54yOyN7ew3N9bVa8Rko+dFwdcNg7ESA==}
+    peerDependencies:
+      '@capacitor/core': ^6.0.0
 
   '@cloudflare/kv-asset-handler@0.4.2':
     resolution: {integrity: sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==}
@@ -3838,6 +3862,10 @@ snapshots:
     dependencies:
       '@capacitor/core': 6.2.1
 
+  '@capacitor/app@6.0.3(@capacitor/core@6.2.1)':
+    dependencies:
+      '@capacitor/core': 6.2.1
+
   '@capacitor/cli@6.2.1':
     dependencies:
       '@ionic/cli-framework-output': 2.2.8
@@ -3863,6 +3891,14 @@ snapshots:
   '@capacitor/core@6.2.1':
     dependencies:
       tslib: 2.8.1
+
+  '@capacitor/filesystem@6.0.4(@capacitor/core@6.2.1)':
+    dependencies:
+      '@capacitor/core': 6.2.1
+
+  '@capacitor/share@6.0.4(@capacitor/core@6.2.1)':
+    dependencies:
+      '@capacitor/core': 6.2.1
 
   '@cloudflare/kv-asset-handler@0.4.2': {}
 
