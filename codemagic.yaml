@@ -4,29 +4,52 @@ workflows:
     max_build_duration: 60
 
     environment:
-      node: 20
-      java: 17   # ✅ KEEP THIS
+      node: 22
+      java: 17
+
+      groups:
+        - google_play
+
+      vars:
+        JAVA_HOME: /usr/lib/jvm/java-17
 
     scripts:
+      - name: Force Java 17 (CRITICAL FIX)
+        script: |
+          export JAVA_HOME=/usr/lib/jvm/java-17
+          export PATH=$JAVA_HOME/bin:$PATH
+          java -version
+
+      - name: Deep clean environment
+        script: |
+          rm -rf ~/.gradle
+          rm -rf android/.gradle
+          rm -rf android/build
+          rm -rf android/app/build
+
       - name: Install dependencies
         script: |
           npm install -g pnpm --force
           pnpm install --no-frozen-lockfile
 
       - name: Build web app
-        script: |
-          pnpm build
+        script: pnpm build
 
-      - name: Sync Capacitor
+      - name: Sync Capacitor (safe mode)
         script: |
           npx cap sync android
 
-      - name: Build APK
+      - name: Fix Gradle wrapper permissions
         script: |
           cd android
           chmod +x gradlew
-          ./gradlew clean
-          ./gradlew assembleDebug --no-daemon --stacktrace --warning-mode all
+          ./gradlew --version
+
+      - name: Build APK (hard mode)
+        script: |
+          cd android
+          ./gradlew clean --no-daemon
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
     artifacts:
       - android/app/build/outputs/**/*.apk
