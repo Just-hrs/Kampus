@@ -10,16 +10,7 @@ workflows:
       groups:
         - google_play
 
-      vars:
-        JAVA_HOME: /usr/lib/jvm/java-17
-
     scripts:
-      - name: Force Java 17 (CRITICAL FIX)
-        script: |
-          export JAVA_HOME=/usr/lib/jvm/java-17
-          export PATH=$JAVA_HOME/bin:$PATH
-          java -version
-
       - name: Deep clean environment
         script: |
           rm -rf ~/.gradle
