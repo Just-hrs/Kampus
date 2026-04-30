@@ -2,8 +2,10 @@ import { Filesystem, Directory, Encoding  } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
 export async function exportData(json: string) {
-  const fileName = `kampus-backup-${Date.now()}.json`;
-
+  const date = new Date().toISOString().slice(0, 10);
+  const fileName = `kampus-backup-${date}.json`;
+  
+  
   await Filesystem.writeFile({
     path: fileName,
     data: json,
@@ -15,10 +17,24 @@ export async function exportData(json: string) {
     path: fileName,
   });
 
+
+
   await Share.share({
     title: "Kampus Backup",
-    text: "Your backup file",
+    text: "Backup your student life data safely.",
     url: uriResult.uri,
-    dialogTitle: "Export Backup",
+    dialogTitle: "Export Kampus Backup",
   });
+
+  // give OS time to consume file
+  setTimeout(async () => {
+    try {
+      await Filesystem.deleteFile({
+        path: fileName,
+        directory: Directory.Cache,
+      });
+    } catch {
+      // ignore cleanup failure
+    }
+  }, 3000);
 }

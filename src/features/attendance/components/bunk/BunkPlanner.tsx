@@ -14,7 +14,7 @@ import {
   strategyHated,
   type PlannerMode,
   type PlanDecision,
-} from "@/features/attendance/planner";
+} from "@/features/attendance/components/bunk/planner";
 
 const MODE_META: Array<{ id: PlannerMode; label: string; icon: React.ReactNode; tag: string }> = [
   { id: "max-bunk", label: "Max Bunk", icon: <Zap size={14} />, tag: "Auto-skip safely" },

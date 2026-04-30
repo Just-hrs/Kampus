@@ -18,8 +18,8 @@ function TimetableEditorPage() {
   const navigate = useNavigate();
   const haptic = useHaptics();
   const semesters = useStore((s) => s.semesters);
-  const activeSemId = useStore((s) => s.activeSemesterId);
-  const semId = activeSemId ?? semesters[semesters.length - 1]?.id ?? "";
+  const currentSemId = useStore((s) => s.currentSemesterId);
+  const semId = currentSemId ?? semesters[semesters.length - 1]?.id ?? "";
   const sem = semesters.find((s) => s.id === semId);
 
   const addSubject = useStore((s) => s.addSubject);

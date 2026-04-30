@@ -1,26 +1,10 @@
 import { useMemo, useState } from "react";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Check,
-  X,
-  CalendarOff,
-  Calendar,
-} from "lucide-react";
-
+import {Plus,Pencil,Trash2,Check,X,CalendarOff,Calendar} from "lucide-react";
 import { useStore, type Subject } from "@/core/store";
 import { useHaptics } from "@/core/hooks/useHaptics";
 import { Surface } from "@/core/components/Surface";
 import { RingProgress } from "@/core/components/RingProgress";
-
-import {
-  isoToday,
-  overallPercentage,
-  recoveryClasses,
-  safeSkippable,
-  subjectAttendance,
-} from "@/features/attendance/logic";
+import {isoToday,overallPercentage,recoveryClasses,safeSkippable,subjectAttendance} from "@/features/attendance/logic";
 
 interface Props {
   semesterId: string;

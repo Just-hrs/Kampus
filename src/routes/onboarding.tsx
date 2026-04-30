@@ -9,7 +9,9 @@ export const Route = createFileRoute("/onboarding")({
   component: Onboarding,
 });
 
-const STEPS = ["welcome", "name", "theme", "subjects", "schedule", "target", "done"] as const;
+const STEPS = ["welcome", "name", "theme", 
+                //"subjects", "schedule", 
+                "target", "done"] as const;
 type Step = (typeof STEPS)[number];
 
 const THEMES: Array<{ id: ThemeId; name: string; vibe: string; preview: string }> = [
@@ -39,6 +41,8 @@ function Onboarding() {
 
   const idx = STEPS.indexOf(step);
   const progress = (idx / (STEPS.length - 1)) * 100;
+  const [currentSem, setCurrentSem] = useState(1);
+  const setCurrentSemester = useStore((s) => s.setCurrentSemester);
 
   const next = () => {
     haptic("success");
@@ -46,10 +50,12 @@ function Onboarding() {
   };
 
   const finish = () => {
+    
     completeOnboarding({
       name,
       theme,
       totalSemesters: totalSems,
+      currentSemester: currentSem, // 🔥 ADD THIS
       target,
       subjects,
       schedule: Object.fromEntries(
@@ -88,7 +94,7 @@ function Onboarding() {
               {step === "welcome" && (
                 <div className="text-center pt-8">
                   <div className="text-6xl mb-4">🎓</div>
-                  <h1 className="text-3xl font-display font-bold text-neon">StudentOS</h1>
+                  <h1 className="text-3xl font-display font-bold text-neon">Kampus</h1>
                   <p className="mt-3 text-muted-foreground">
                     Your offline college companion. Grades, attendance, expenses, bunk plans, and chaos. All on your device.
                   </p>
@@ -145,7 +151,7 @@ function Onboarding() {
                 </div>
               )}
 
-              {step === "subjects" && (
+              {/* {step === "subjects" && (
                 <div>
                   <h2 className="text-2xl font-display font-bold">Add your subjects</h2>
                   <p className="text-muted-foreground mt-1 text-sm">For your current semester.</p>
@@ -246,7 +252,7 @@ function Onboarding() {
                     ))}
                   </div>
                 </div>
-              )}
+              )} */}
 
               {step === "target" && (
                 <div>
@@ -280,6 +286,24 @@ function Onboarding() {
                       className="mt-2 w-full accent-[color:var(--primary)]"
                     />
                   </div>
+                  <div className="mt-3 surface-glass rounded-[var(--radius-2)] p-4">
+                    <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                      Current semester
+                    </div>
+
+                    <div className="text-4xl font-display font-bold mt-1">
+                      Sem {currentSem}
+                    </div>
+
+                    <input
+                      type="range"
+                      min="1"
+                      max={totalSems}
+                      value={currentSem}
+                      onChange={(e) => setCurrentSem(Number(e.target.value))}
+                      className="mt-2 w-full accent-[color:var(--primary)]"
+                    />
+                  </div>
                 </div>
               )}
 
@@ -295,7 +319,7 @@ function Onboarding() {
                   </motion.div>
                   <h2 className="text-2xl font-display font-bold">All set, {name || "friend"}.</h2>
                   <p className="text-muted-foreground mt-2 text-sm">
-                    Your StudentOS is calibrated. Let's run it.
+                    Kampus is calibrated. Let's run it.
                   </p>
                 </div>
               )}
@@ -307,11 +331,11 @@ function Onboarding() {
         <div className="sticky bottom-0 px-4 pb-6 pt-3 bg-gradient-to-t from-background to-transparent">
           <button
             onClick={step === "done" ? finish : next}
-            disabled={step === "subjects" && subjects.length === 0}
+            //disabled={step === "subjects" && subjects.length === 0}
             className="flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-sm font-bold text-primary-foreground disabled:opacity-40"
             style={{ background: "var(--grad-primary)", boxShadow: "var(--glow-primary)" }}
           >
-            {step === "done" ? "Launch StudentOS" : "Continue"}
+            {step === "done" ? "Launch Kampus" : "Continue"}
             <ChevronRight size={16} />
           </button>
         </div>

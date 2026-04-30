@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Download, Upload, Trash2, Check } from "lucide-react";
 import { useStore, type ThemeId } from "@/core/store";
 import { Surface } from "@/core/components/Surface";
@@ -32,16 +32,28 @@ function SettingsPage() {
   const haptic = useHaptics();
   const [status, setStatus] = useState<string | null>(null);
 
+  const semesters = useStore((s) => s.semesters);
+  const currentSemesterId = useStore((s) => s.currentSemesterId);
+  const setCurrentSemester = useStore((s) => s.setCurrentSemester);
+
+  const addSemester = useStore((s) => s.addSemester);
+  const deleteLastSemester = useStore((s) => s.deleteLastSemester);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
   // ✅ FINAL EXPORT HANDLER
   const onExport = async () => {
     try {
-      const json = await storeExport(); // get JSON from store
-      await exportToDevice(json);       // send to Capacitor
+      const json = await storeExport(); // from Zustand
+      await exportToDevice(json);       // Capacitor function
 
-      haptic("success");
-      setStatus("Export opened");
+      haptic("success"); // ✅ HERE (UI layer)
+
+      setStatus("Choose 'Save to Files' to store backup"); // ✅ improved message
     } catch (e) {
       console.error(e);
+      haptic("warning"); // 👈 add this too
+
       setStatus("Export failed");
     }
   };
@@ -55,13 +67,26 @@ function SettingsPage() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      const text = await file.text();
-      const ok = await importData(text);
+      // ✅ Confirm overwrite
+      const confirmed = confirm(
+        "This will replace your entire data. Continue?"
+      );
+      if (!confirmed) return;
 
-      haptic(ok ? "success" : "error");
-      setStatus(ok ? "Imported." : "Import failed");
+      try {
+        const text = await file.text();
+        const ok = await importData(text);
 
-      setTimeout(() => setStatus(null), 2500);
+        if (!ok) throw new Error("Invalid file");
+
+        haptic("success");
+        setStatus("✅ Backup restored successfully");
+      } catch {
+        haptic("error");
+        setStatus("❌ Invalid or corrupted backup file");
+      }
+
+      setTimeout(() => setStatus(null), 3000);
     };
 
     input.click();
@@ -109,6 +134,66 @@ function SettingsPage() {
         </div>
       </Surface>
 
+      {/* Profile */}
+      <Surface className="p-4 space-y-3">
+        <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+          Profile
+        </div>
+
+        <Field label="Your name">
+          <input
+            value={settings.studentName ?? ""}
+            onChange={(e) => setSettings({ studentName: e.target.value })}
+            placeholder="What should we call you?"
+            className="w-full rounded-[var(--radius-2)] bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+        </Field>
+
+        <Field label={`Total Semesters: ${settings.totalSemesters}`}>
+          <input
+            type="range"
+            min="2"
+            max="12"
+            value={settings.totalSemesters}
+            onChange={(e) => setSettings({ totalSemesters: Number(e.target.value) })}
+            className="w-full accent-[color:var(--primary)]"
+          />
+        </Field>
+
+        {/* Current Semester */}
+        <Field
+          label={`Current Semester: ${
+            semesters.find((s) => s.id === currentSemesterId)?.number ?? "-"
+          }`}
+        >
+          <input
+            type="range"
+            min="1"
+            max={semesters.length || 1}
+            value={
+              semesters.findIndex((s) => s.id === currentSemesterId) + 1 || 1
+            }
+            onChange={(e) => {
+              const index = Number(e.target.value) - 1;
+              const sem = semesters[index];
+              if (sem) setCurrentSemester(sem.id);
+            }}
+            className="w-full accent-[color:var(--primary)]"
+          />
+        </Field>
+
+        <Field label={`Attendance Target: ${settings.attendanceTarget}%`}>
+          <input
+            type="range"
+            min="50"
+            max="95"
+            value={settings.attendanceTarget}
+            onChange={(e) => setSettings({ attendanceTarget: Number(e.target.value) })}
+            className="w-full accent-[color:var(--primary)]"
+          />
+        </Field>
+      </Surface>
+
       {/* Feedback (FIXED UI) */}
       <Surface className="p-4 space-y-2">
         <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
@@ -126,6 +211,36 @@ function SettingsPage() {
           on={settings.sounds}
           onChange={(v) => setSettings({ sounds: v })}
         />
+
+        {/* Start New Semester */}
+        <button
+          onClick={addSemester}
+          disabled={semesters.length >= settings.totalSemesters}
+          className="w-full rounded-[var(--radius-2)] bg-primary text-primary-foreground py-2 text-sm font-semibold disabled:opacity-50"
+        >
+          {semesters.length >= settings.totalSemesters
+            ? "All semesters created"
+            : "Start New Semester"}
+        </button>
+
+        <button
+          onClick={() => {
+            if (semesters.length <= 1) {
+              haptic("warning");
+              return;
+            }
+            setConfirmDeleteOpen(true);
+          }}
+          className="mt-2 w-full rounded-2xl bg-destructive/10 text-destructive py-2 text-sm font-semibold"
+        >
+          Delete Last Semester
+        </button>
+
+        {semesters.length <= 1 && (
+          <div className="text-[11px] text-muted-foreground mt-1 text-center">
+            No semesters left to delete
+          </div>
+        )}
       </Surface>
 
       {/* Data */}
@@ -139,7 +254,7 @@ function SettingsPage() {
           onClick={onExport}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-2.5 text-sm font-bold text-primary-foreground"
         >
-          <Download size={14} /> Export backup
+          <Download size={14} /> Export backup to Device
         </button>
 
         <button
@@ -147,7 +262,7 @@ function SettingsPage() {
           onClick={onImport}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-secondary py-2.5 text-sm font-bold text-secondary-foreground"
         >
-          <Upload size={14} /> Import backup
+          <Upload size={14} /> Import backup from Device
         </button>
 
         <button
@@ -171,10 +286,120 @@ function SettingsPage() {
         )}
       </Surface>
 
+      {/* About */}
+      <Surface className="p-5">
+        <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+          About KAMPUS
+        </div>
+        <h2 className="mt-1 font-display text-xl font-bold">why i made it</h2>
+        <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground/90">
+          <p>Kabhi koi class bunk kerne ka man kiya hai ? </p>
+          <p>Attendance ki tansion 😬!</p>
+          <p>
+            Subah uthke lagta hai:
+            <br />
+            <em className="text-muted-foreground">"Bhai aaj nahi ho payega."</em>
+          </p>
+          <p>
+            Fir dimaag me attendance percentage ghoomna start:
+            <br />
+            <em className="text-muted-foreground">"Agar ye class miss ki toh 70 ke niche toh nahi chala jaunga?"</em>
+            <br />
+            <em className="text-muted-foreground">"Kitne aur bunk safe hain?"</em>
+            <br />
+            <em className="text-muted-foreground">"Kya recover ho sakta hai?"</em>
+          </p>
+          <p>Aur honestly… us time koi simple app nahi thi jo seedha jawab de de.</p>
+          <p>Sab ya toh boring the. Ya spreadsheet jaisa feel dete the. Ya itne complicated ki unko use karne me hi attendance chali jaye.</p>
+          <p className="font-semibold text-foreground">So here It is </p>
+          <p>Ek aisa app jo:</p>
+          <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+            <li>sirf productive nahi,</li>
+            <li>thoda funny ho,</li>
+            <li>thoda sarcastic ho,</li>
+            <li>aur student life ko actually samjhe.</li>
+          </ul>
+          <p>Yaha graphs bhi hain. Bunk simulator bhi. CGPA ka reality check bhi. Aur emotional damage bhi.</p>
+          <p>
+            Kabhi motivation dega. Kabhi judge karega. Kabhi bolega:{" "}
+            <em className="text-foreground">"Bhai padh le."</em>
+            <br />
+            Aur kabhi: <em className="text-foreground">"Risk lete hain."</em>
+          </p>
+          <p>Agar ye app kisi ek student ka bhi semester thoda less painful bana de… toh worth it tha.</p>
+          <p className="pt-2 text-right text-xs font-semibold">— Harsh Chaurasiya</p>
+          <p className="pt-1 text-center text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+            Built on caffeine, poor decisions, and academic survival instincts.
+          </p>
+        </div>
+      </Surface>
+      
       <Signature page="about" className="pb-2" />
+
+      <AnimatePresence>
+        {confirmDeleteOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm"
+            >
+              <Surface className="p-5 space-y-4">
+                <div className="text-lg font-bold">
+                  Delete last semester?
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  This action cannot be undone.
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setConfirmDeleteOpen(false);
+                      haptic("tick");
+                    }}
+                    className="flex-1 rounded-xl bg-surface-2 py-2 text-sm font-semibold"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      deleteLastSemester();
+                      setConfirmDeleteOpen(false);
+                      haptic("warning");
+                    }}
+                    className="flex-1 rounded-xl bg-destructive text-white py-2 text-sm font-semibold"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </Surface>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-muted-foreground mb-1.5">{label}</div>
+      {children}
+    </div>
+  );
+}
+
+
 
 /* ---------- SMALL FIXED TOGGLE ---------- */
 function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
@@ -186,14 +411,16 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
     >
       <span className="text-sm">{label}</span>
 
+      {/* TRACK */}
       <span
-        className="relative h-6 w-11 rounded-full transition-colors shrink-0"
+        className="relative h-6 w-11 rounded-full shrink-0 overflow-hidden transition-colors"
         style={{ background: on ? "var(--primary)" : "var(--muted)" }}
       >
+        {/* THUMB WRAPPER (CONSTRAINED) */}
         <motion.span
-          animate={{ x: on ? 22 : 2 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-          className="absolute top-1 h-4 w-4 rounded-full bg-white shadow"
+          className="absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow"
+          animate={{ x: on ? 22 : 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 35 }}
         />
       </span>
     </button>

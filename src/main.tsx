@@ -7,30 +7,51 @@ import { getRouter } from "./router";
 import { App } from "@capacitor/app";
 
 import "./styles.css";
+import { useStore } from "@/core/store";
+
+if (typeof window !== "undefined") {
+  // debug only
+  (window as any).useStore = useStore;
+}
 
 const router = getRouter();
 
 /* ----------------------------
-   ANDROID BACK BUTTON FIX (SAFE)
+   ANDROID BACK BUTTON
 -----------------------------*/
-let lastBackPress = 0;
 
-const backHandler = App.addListener("backButton", () => {
-  const now = Date.now();
+const ROOT_ROUTES = [
+  "/",
+  "/attendance",
+  "/grades",
+  "/games",
+  "/expenses",
+  "/settings",
+  "/insights",
+  "/timetable",
+];
 
-  // Try router navigation first
-  if (window.history.length > 1) {
-    window.history.back();
+const backHandler = App.addListener("backButton", async () => {
+  const path = router.state.location.pathname;
+
+  // HOME -> EXIT APP
+  if (path === "/") {
+    App.exitApp();
     return;
   }
 
-  // Double press to exit app
-  if (now - lastBackPress < 2000) {
-    App.exitApp();
-  } else {
-    lastBackPress = now;
-    console.log("Press back again to exit");
+  // TOP LEVEL PAGE -> HOME
+  if (ROOT_ROUTES.includes(path)) {
+    router.navigate({
+      to: "/",
+      replace: true,
+    });
+
+    return;
   }
+
+  // NESTED PAGE -> NORMAL BACK
+  window.history.back();
 });
 
 /* ----------------------------

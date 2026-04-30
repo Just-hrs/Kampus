@@ -1,6 +1,6 @@
 import type { Subject, DaySchedule, AttendanceRecord, ExtraClass } from "@/core/store";
-import { isEffectiveHoliday, getHoliday } from "./holidays";
-import { isoFromDate } from "./logic";
+import { isEffectiveHoliday, getHoliday } from "../../holidays";
+import { isoFromDate } from "../../logic";
 
 export type PlanDecision = "go" | "skip";
 export type PlannerMode = "max-bunk" | "clear-day" | "hated" | "manual";

@@ -1,6 +1,6 @@
 import { openDB, type IDBPDatabase } from "idb";
 
-const DB_NAME = "studentos";
+const DB_NAME = "Kampus";
 const DB_VERSION = 1;
 
 const STORES = ["grades", "attendance", "expenses", "games", "settings", "streaks", "meta"] as const;
