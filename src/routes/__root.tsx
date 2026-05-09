@@ -26,13 +26,13 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "StudentOS — Your College Lifestyle OS" },
+      { title: "KAMPUS — The only app you need" },
       {
         name: "description",
         content:
-          "StudentOS — the offline-first college companion. Grades, attendance, expenses, bunk simulator, insights, games. All on-device.",
+          "KAMPUS — the offline-first college companion. Grades, attendance, expenses, bunk simulator, insights, games. All on-device.",
       },
-      { property: "og:title", content: "StudentOS — Your College Lifestyle OS" },
+      { property: "og:title", content: "KAMPUS — The only app you need" },
       { property: "og:description", content: "Track grades, plan bunks, log expenses. Offline. On-device. Always with you." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -48,12 +48,12 @@ export const Route = createRootRoute({
 const themeBootstrap = `
 (function(){
   try {
-    var t = localStorage.getItem('sos_theme') || 'neon';
+    var t = localStorage.getItem('sos_theme') || 'pop';
     var valid = ['neon','matte','pop','focus'];
     if (valid.indexOf(t) === -1) t = 'neon';
     document.documentElement.classList.add('theme-' + t);
   } catch(e) {
-    document.documentElement.classList.add('theme-neon');
+    document.documentElement.classList.add('theme-pop');
   }
 })();
 `;

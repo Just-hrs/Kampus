@@ -34,7 +34,8 @@ export function SubjectManager({ semesterId }: Props) {
   const [name, setName] = useState("");
   const [credits, setCredits] = useState(3);
   const [startDate, setStartDate] = useState("*Set start Date");
-
+  const [type, setType] = useState<Subject["type"]>("CORE");
+  const [open, setOpen] = useState(false);
   const rows = useMemo(
     () =>
       sem
@@ -125,13 +126,38 @@ export function SubjectManager({ semesterId }: Props) {
 
         {adding && (
           <div className="mt-3 space-y-3 rounded-2xl bg-surface-2 p-3">
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Operating Systems..."
-              className="w-full rounded-2xl bg-input px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
-            />
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Operating Systems..."
+                className="flex-1 rounded-2xl bg-input px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+
+              <div className="flex items-center gap-2 rounded-2xl bg-input px-2 py-2">
+                <button
+                  type="button"
+                  onClick={() => setCredits(Math.max(1, credits - 1))}
+                  className="h-8 w-8 rounded-xl bg-surface text-sm"
+                >
+                  −
+                </button>
+
+                <div className="w-8 text-center text-sm font-bold">
+                  {credits}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCredits(Math.min(8, credits + 1))}
+                  className="h-8 w-8 rounded-xl bg-surface text-sm"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
 
             <div className="grid grid-cols-[1fr_auto] gap-2">
               <label className="space-y-1">
@@ -155,38 +181,66 @@ export function SubjectManager({ semesterId }: Props) {
                   />
                 </div>
               </label>
+              <label className="space-y-1">
+  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+    Type
+  </span>
 
-              <div className="flex items-end">
-                <div className="flex items-center gap-2 rounded-2xl bg-input px-2 py-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCredits(
-                        Math.max(1, credits - 1),
-                      )
-                    }
-                    className="h-8 w-8 rounded-xl bg-surface text-sm"
-                  >
-                    −
-                  </button>
+  <div className="relative">
+    <button
+      type="button"
+      onClick={() => setOpen((v) => !v)}
+      className="flex w-full items-center justify-between rounded-2xl bg-input px-4 py-2.5 text-sm"
+    >
+      <span>
+        {type === "CORE"
+          ? "Core"
+          : type === "TRACKED"
+          ? "Tracked (70%)"
+          : "Ignore"}
+      </span>
 
-                  <div className="w-8 text-center text-sm font-bold">
-                    {credits}
-                  </div>
+      <span className="text-muted-foreground">▾</span>
+    </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCredits(
-                        Math.min(8, credits + 1),
-                      )
-                    }
-                    className="h-8 w-8 rounded-xl bg-surface text-sm"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
+    {open && (
+      <>
+        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
+          {(["CORE", "TRACKED", "IGNORE"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setType(t);
+                setOpen(false);
+              }}
+              className={`w-full px-4 py-2.5 text-left text-sm ${
+                type === t
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-surface-2"
+              }`}
+            >
+              {t === "CORE"
+                ? "Core"
+                : t === "TRACKED"
+                ? "Tracked"
+                : "Ignore"}
+            </button>
+          ))}
+        </div>
+
+        {/* click outside */}
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setOpen(false)}
+        />
+      </>
+    )}
+  </div>
+</label>
+              
+
+              
             </div>
 
             <button
@@ -198,8 +252,8 @@ export function SubjectManager({ semesterId }: Props) {
                   name: name.trim(),
                   credits,
                   color: "",
-                  startDateISO:
-                    startDate || undefined,
+                  startDateISO: startDate || undefined,
+                  type: "CORE",
                 });
 
                 haptic("success");
@@ -292,7 +346,7 @@ interface ItemProps {
   target: number;
 
   onEdit: (
-    patch: Partial<Omit<Subject, "id">>,
+    patch: Partial<Subject>,
   ) => void;
 
   onRemove: () => void;
@@ -420,6 +474,30 @@ function SubjectItem({
               </button>
             </div>
 
+            <div className="space-y-1">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Type
+              </div>
+
+              <div className="flex gap-2">
+                {(["CORE", "TRACKED", "IGNORE"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => onEdit({ type: t })}
+                    className={`rounded-xl px-3 py-1 text-[11px] transition ${
+                      sub.type === t
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-input text-muted-foreground"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
             <div className="flex gap-2">
               <button
                 type="button"
@@ -437,10 +515,9 @@ function SubjectItem({
                   onEdit({
                     name: name.trim(),
                     credits,
-                    startDateISO:
-                      start || undefined,
-                    endDateISO:
-                      end || undefined,
+                    startDateISO: start || undefined,
+                    endDateISO: end || undefined,
+                    type: sub.type,
                   });
 
                   setEditing(false);
@@ -451,7 +528,6 @@ function SubjectItem({
                 Save
               </button>
             </div>
-          </div>
         </div>
       ) : (
         <div className="flex items-start gap-4">

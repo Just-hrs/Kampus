@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, GraduationCap, CalendarCheck, Wallet, Sparkles, Gamepad2, Settings } from "lucide-react";
+import { LayoutDashboard, GraduationCap, CalendarCheck, Wallet, Sparkles, Gamepad2, Settings,Brain} from "lucide-react";
 import { motion } from "framer-motion";
 
 const TABS = [
@@ -9,6 +9,7 @@ const TABS = [
   { to: "/expenses", label: "Expenses", icon: Wallet },
   { to: "/insights", label: "Insights", icon: Sparkles },
   { to: "/games", label: "Games", icon: Gamepad2 },
+  {to: "/study",label: "Study",icon: Brain},
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 

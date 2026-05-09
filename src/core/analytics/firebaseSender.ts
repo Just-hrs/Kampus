@@ -4,7 +4,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import { db } from "./firebase";
+//import { db } from "./firebase";
 
 export async function sendToFirebase(
   packet: string
@@ -28,22 +28,22 @@ export async function sendToFirebase(
       packet
     );
 
-    const docRef = await addDoc(
-      collection(
-        db,
-        "analyticsPackets"
-      ),
-      {
-        packet,
-        createdAt:
-          serverTimestamp(),
-      }
-    );
+    // const docRef = await addDoc(
+    //   collection(
+    //     db,
+    //     "analyticsPackets"
+    //   ),
+    //   {
+    //     packet,
+    //     createdAt:
+    //       serverTimestamp(),
+    //   }
+    // );
 
-    console.log(
-      "[FIREBASE] upload success:",
-      docRef.id
-    );
+    // console.log(
+    //   "[FIREBASE] upload success:",
+    //   docRef.id
+    // );
 
   } catch (err) {
 

@@ -7,7 +7,7 @@ import { useHaptics } from "@/core/hooks/useHaptics";
 import { useHydrated } from "@/core/hooks/useHydrated";
 import { Surface } from "@/core/components/Surface";
 import { CountUp } from "@/core/components/CountUp";
-import { CATEGORIES, CATEGORY_META, monthlyTotal, necessaryUnnecessary, byCategory, dailyThisMonth } from "@/features/expenses/logic";
+import {monthlyTotal, necessaryUnnecessary, byCategory, dailyThisMonth } from "@/features/expenses/logic";
 import { formatINR } from "@/core/lib/utils";
 import { isoToday } from "@/features/attendance/logic";
 import { Signature } from "@/core/components/Signature";
@@ -19,6 +19,11 @@ export const Route = createFileRoute("/expenses")({
 function ExpensesPage() {
   const hydrated = useHydrated();
   const expenses = useStore((s) => s.expenses);
+  const categories = useStore((s) => s.categories);
+  const addCategory = useStore((s) => s.addCategory);
+  const updateCategory = useStore((s) => s.updateCategory);
+  const removeCategory = useStore((s) => s.removeCategory);
+  const updateExpense = useStore((s) => s.updateExpense);
   const budget = useStore((s) => s.monthlyBudget);
   const setBudget = useStore((s) => s.setMonthlyBudget);
   const removeExpense = useStore((s) => s.removeExpense);
@@ -26,15 +31,20 @@ function ExpensesPage() {
   const [sheet, setSheet] = useState(false);
 
   const now = new Date();
-  const total = monthlyTotal(expenses, now.getFullYear(), now.getMonth());
-  const { necessary, unnecessary } = necessaryUnnecessary(expenses, now.getFullYear(), now.getMonth());
-  const cats = byCategory(expenses, now.getFullYear(), now.getMonth());
-  const daily = dailyThisMonth(expenses, now.getFullYear(), now.getMonth());
+
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+
+  const [editMode, setEditMode] = useState(false);
+  const total = monthlyTotal(expenses, selectedYear, selectedMonth);
+  const { necessary, unnecessary } = necessaryUnnecessary(expenses, selectedYear, selectedMonth);
+  const cats = byCategory(expenses, selectedYear, selectedMonth);
+  const daily = dailyThisMonth(expenses, selectedYear, selectedMonth);
 
   const recentMonth = expenses
     .filter((e) => {
       const d = new Date(e.dateISO);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
     })
     .slice(0, 8);
 
@@ -125,22 +135,100 @@ function ExpensesPage() {
       {/* By Category */}
       <Surface className="p-4">
         <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">
-          By Category
+          By Category 
+          <Surface className="p-3">
+            <div className="flex gap-2">
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="flex-1 rounded-xl bg-surface-2 px-3 py-2 text-sm"
+              >
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <option key={i} value={i}>
+                    {new Date(2026, i).toLocaleString("default", {
+                      month: "long",
+                    })}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="rounded-xl bg-surface-2 px-3 py-2 text-sm"
+              >
+                {Array.from({ length: 6 }).map((_, i) => {
+                  const y = 2024 + i;
+                  return (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </Surface>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {CATEGORIES.map((c) => {
+          {categories.map((catObj) => {
+            const c = catObj.id;
             const v = cats[c] ?? 0;
-            const meta = CATEGORY_META[c];
+            const meta = catObj;
             return (
-              <div key={c} className="rounded-[var(--radius-2)] bg-surface-2 p-2">
+              <div key={c} className="relative rounded-[var(--radius-2)] bg-surface-2 p-2">
                 <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <span>{meta.emoji}</span>
-                  <span>{meta.label}</span>
+                  {editMode ? (
+                    <input
+                      value={meta.emoji}
+                      maxLength={2}
+                      onChange={(e) =>
+                        updateCategory(c, {
+                          emoji: e.target.value,
+                        })
+                      }
+                      className="w-10 bg-transparent text-center"
+                    />
+                  ) : (
+                    <span>{meta.emoji}</span>
+                  )}
+                  {editMode ? (
+                    <input
+                      value={meta.label}
+                      onChange={(e) =>
+                        updateCategory(c, {
+                          label: e.target.value,
+                        })
+                      }
+                      className="w-full bg-transparent outline-none"
+                    />
+                  ) : (
+                    <span>{meta.label}</span>
+                  )}
+                  {editMode && (
+                    <button
+                      onClick={() => removeCategory(c)}
+                      className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
                 <div className="mt-1 font-display font-bold">{formatINR(v)}</div>
               </div>
             );
           })}
+          <button
+            onClick={() =>
+            addCategory({
+              label: "New",
+              emoji: "✨",
+              color: "var(--chart-1)",
+              })
+            }
+            className="rounded-[var(--radius-2)] border border-dashed border-border p-3 text-sm"
+          >
+            + Add Category
+          </button>
         </div>
       </Surface>
 
@@ -156,7 +244,14 @@ function ExpensesPage() {
         ) : (
           <div className="space-y-1.5">
             {recentMonth.map((e) => {
-              const meta = CATEGORY_META[e.category];
+                const meta =
+                  categories.find((c) => c.id === e.category) ?? {
+                    label: "Unknown",
+                    emoji: "❓",
+                    color: "var(--muted)",
+                  };
+              const [editingId, setEditingId] = useState<string | null>(null);
+              const [editAmount, setEditAmount] = useState("");
               return (
                 <div key={e.id} className="flex items-center gap-3 rounded-[var(--radius-1)] bg-surface-2 p-2">
                   <div className="text-xl">{meta.emoji}</div>
@@ -166,7 +261,18 @@ function ExpensesPage() {
                       {e.dateISO} · {e.necessary ? "Need" : "Vibe"}
                     </div>
                   </div>
-                  <div className="font-display font-bold">{formatINR(e.amount)}</div>
+                  {editingId === e.id ? (
+                    <input
+                      type="number"
+                      value={editAmount}
+                      onChange={(ev) => setEditAmount(ev.target.value)}
+                      className="w-20 rounded bg-input px-2 py-1"
+                    />
+                  ) : (
+                    <div className="font-display font-bold">
+                      {formatINR(e.amount)}
+                    </div>
+                  )}
                   <button
                     onClick={() => {
                       removeExpense(e.id);
@@ -175,6 +281,23 @@ function ExpensesPage() {
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (editingId === e.id) {
+                        updateExpense(e.id, {
+                          amount: Number(editAmount),
+                        });
+
+                        setEditingId(null);
+                      } else {
+                        setEditingId(e.id);
+                        setEditAmount(String(e.amount));
+                      }
+                    }}
+                    className="text-xs text-primary"
+                  >
+                    {editingId === e.id ? "Save" : "Edit"}
                   </button>
                 </div>
               );
@@ -229,6 +352,7 @@ function AddExpenseSheet({ onClose }: { onClose: () => void }) {
   const [cat, setCat] = useState<ExpenseCategory>("food");
   const [necessary, setNecessary] = useState(true);
   const [note, setNote] = useState("");
+  const categories = useStore((s) => s.categories);
 
   const press = (k: string) => {
     haptic("tick");
@@ -287,8 +411,9 @@ function AddExpenseSheet({ onClose }: { onClose: () => void }) {
           ))}
         </div>
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-3">
-          {CATEGORIES.map((c) => {
-            const m = CATEGORY_META[c];
+          {categories.map((catObj) => {
+            const c = catObj.id;
+            const m = catObj;
             const active = cat === c;
             return (
               <button

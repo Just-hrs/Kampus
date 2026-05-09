@@ -1,5 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { LayoutDashboard, GraduationCap, CalendarCheck, Wallet, Sparkles, Gamepad2 } from "lucide-react";import { useHaptics } from "@/core/hooks/useHaptics";
+import { LayoutDashboard, GraduationCap, CalendarCheck, Wallet, Brain, Gamepad2 } from "lucide-react";
+import { useHaptics } from "@/core/hooks/useHaptics";
 import { motion } from "framer-motion";
 
 const TABS = [
@@ -7,7 +8,8 @@ const TABS = [
   { to: "/grades", label: "Grades", icon: GraduationCap },
   { to: "/attendance", label: "Attend", icon: CalendarCheck },
   { to: "/expenses", label: "Spend", icon: Wallet },
-  { to: "/games", label: "Games", icon: Gamepad2 }, // 🔥 added
+  { to: "/games", label: "Games", icon: Gamepad2 },
+  {to: "/study",label: "Study",icon: Brain},
 ] as const;
 
 export function BottomNav() {
@@ -26,7 +28,6 @@ export function BottomNav() {
             <li key={tab.to}>
               <Link
                 to={tab.to}
-                onClick={() => haptic("tick")}
                 className="relative flex h-11 min-w-11 items-center justify-center rounded-full px-3 text-muted-foreground transition-colors"
               >
                 {active && (

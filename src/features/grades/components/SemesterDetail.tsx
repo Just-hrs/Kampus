@@ -6,12 +6,7 @@ import { useHaptics } from "@/core/hooks/useHaptics";
 import { Surface } from "@/core/components/Surface";
 import { CountUp } from "@/core/components/CountUp";
 import { RingProgress } from "@/core/components/RingProgress";
-import {
-  calcSGPA,
-  semesterCompletion,
-  strongestSubject,
-  weakestSubject,
-} from "@/features/grades/logic";
+import {calcSGPA,semesterCompletion,strongestSubject,weakestSubject,} from "@/features/grades/logic";
 import { GradeSelector } from "@/features/grades/components/GradeSelector";
 import { GradeRing } from "@/features/grades/components/GradeRing";
 import { RadarChart } from "@/features/grades/components/RadarChart";
@@ -212,7 +207,12 @@ export function SemesterDetail({ semId }: { semId: string }) {
                   <button
                     onClick={() => {
                       if (!newName.trim()) return;
-                      addSubject(sem.id, { name: newName.trim(), credits: newCredits, color: "" });
+                      addSubject(sem.id, {
+                        name: newName.trim(),
+                        credits: newCredits,
+                        color: "",
+                        type: "CORE",
+                      });
                       haptic("success");
                       setNewName("");
                       setAdding(false);

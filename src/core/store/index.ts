@@ -6,34 +6,34 @@ import { create } from "zustand";
 import { idbGet, idbSet } from "@/core/storage/db";
 import { debounce, uid } from "@/core/lib/utils";
 
-// import { enqueueAnalytics, flushAnalyticsQueue } from "@/core/analytics/uploadQueue";
-// import { sendToFirebase } from "@/core/analytics/firebaseSender";
-// import { getInstallId } from "@/core/analytics/device";
-// import { encodeAnalyticsPacket }from "@/core/analytics/encoder";
+import { enqueueAnalytics, flushAnalyticsQueue } from "@/core/analytics/uploadQueue";
+import { sendToFirebase } from "@/core/analytics/firebaseSender";
+import { getInstallId } from "@/core/analytics/device";
+import { encodeAnalyticsPacket }from "@/core/analytics/encoder";
 
 
 // ============= Types =============
 export type ThemeId = "neon" | "matte" | "pop" | "focus";
 export type AttendanceStatus = "present" | "absent" | "cancelled";
-export type ExpenseCategory =
-  | "food"
-  | "transport"
-  | "vibes"
-  | "books"
-  | "subscriptions"
-  | "coffee"
-  | "misc";
-
+export type ExpenseCategory = string;
 
   
+export type SubjectType =
+  | "CORE"        // counts in overall attendance
+  | "TRACKED"     // not in overall, but planner enforces 70%
+  | "IGNORE";     // no tracking logic
+
 export interface Subject {
   id: string;
   name: string;
   code?: string;
   credits: number;
-  color: string; // hex/oklch token name
+  color: string;
+  type: SubjectType;
+  // optional override (default 70 for TRACKED)
+  //minAttendancePct?: number;
   startDateISO?: string;
-  endDateISO?: string; // archived/ended after this date
+  endDateISO?: string;
 }
 
 export interface Semester {
@@ -53,6 +53,14 @@ export interface AttendanceRecord {
 export interface DaySchedule {
   // weekday (0=Sun..6=Sat) -> subjectIds
   [day: number]: string[];
+}
+
+export interface ExpenseCategoryItem {
+  id: string;
+  label: string;
+  emoji: string;
+  color: string;
+  createdAt: number;
 }
 
 export interface Expense {
@@ -235,11 +243,10 @@ export interface StudentOSState {
   activeSemesterId: string | null;
   schedule: DaySchedule;
   attendance: AttendanceRecord;
-  /** dateISO -> "holiday" (force off) or "working" (force class day) */
   holidayOverrides: Record<string, "holiday" | "working">;
-  /** Ad-hoc one-time classes (Sundays, holidays, custom). */
   extraClasses: ExtraClass[];
   expenses: Expense[];
+  categories: ExpenseCategoryItem[];
   monthlyBudget: number;
   games: GameStats;
   settings: Settings;
@@ -268,6 +275,24 @@ export interface StudentOSState {
 
 
 //////////////////////////////////////////////////////////////////////////////////
+  addCategory: (
+    category: Omit<ExpenseCategoryItem, "id" | "createdAt">
+  ) => void;
+
+  updateCategory: (
+    id: string,
+    patch: Partial<ExpenseCategoryItem>
+  ) => void;
+
+  removeCategory: (id: string) => void;
+
+  updateExpense: (
+    id: string,
+    patch: Partial<Expense>
+  ) => void;
+
+
+
   // Actions
   setTheme: (t: ThemeId) => void;
   setSettings: (patch: Partial<Settings>) => void;
@@ -380,6 +405,57 @@ export const useStore = create<StudentOSState>((set, get) => ({
   holidayOverrides: {},
   extraClasses: [],
   expenses: [],
+  categories: [
+    {
+      id: "food",
+      label: "Food",
+      emoji: "🍔",
+      color: "var(--chart-1)",
+      createdAt: Date.now(),
+    },
+    {
+      id: "transport",
+      label: "Transport",
+      emoji: "🚌",
+      color: "var(--chart-2)",
+      createdAt: Date.now(),
+    },
+    {
+      id: "vibes",
+      label: "Vibes",
+      emoji: "🎉",
+      color: "var(--chart-3)",
+      createdAt: Date.now(),
+    },
+    {
+      id: "books",
+      label: "Books",
+      emoji: "📚",
+      color: "var(--chart-4)",
+      createdAt: Date.now(),
+    },
+    {
+      id: "subscriptions",
+      label: "Subs",
+      emoji: "📺",
+      color: "var(--chart-5)",
+      createdAt: Date.now(),
+    },
+    {
+      id: "coffee",
+      label: "Coffee",
+      emoji: "☕",
+      color: "var(--warning)",
+      createdAt: Date.now(),
+    },
+    {
+      id: "misc",
+      label: "Misc",
+      emoji: "✨",
+      color: "var(--muted-foreground)",
+      createdAt: Date.now(),
+    },
+  ],
   monthlyBudget: 5000,
   games: {},
   settings: DEFAULT_SETTINGS,
@@ -452,7 +528,9 @@ export const useStore = create<StudentOSState>((set, get) => ({
       name: s.name,
       credits: s.credits,
       color: SUBJECT_COLORS[i % SUBJECT_COLORS.length],
-    }));
+      type : "CORE",
+    }
+  ));
 
     // 🔥 CREATE FULL SEMESTER STACK
     const currentSemesterNumber = data.currentSemester;
@@ -565,6 +643,7 @@ export const useStore = create<StudentOSState>((set, get) => ({
                 {
                   ...subject,
                   id: uid("sub"),
+                  type: subject.type ?? "CORE",
                   color:
                     subject.color ||
                     SUBJECT_COLORS[
@@ -573,7 +652,7 @@ export const useStore = create<StudentOSState>((set, get) => ({
                 },
               ],
             }
-          : sem,
+          : sem
       ),
     }));
 
@@ -687,7 +766,43 @@ export const useStore = create<StudentOSState>((set, get) => ({
       expenses: s.expenses.filter((e) => e.id !== id),
     })),
 
+  updateExpense: (id, patch) =>
+    set((s) => ({
+      expenses: s.expenses.map((e) =>
+        e.id === id ? { ...e, ...patch } : e
+      ),
+    })),
+
   setMonthlyBudget: (n) => set({ monthlyBudget: n }),
+
+  addCategory: (category) =>
+    set((s) => ({
+      categories: [
+        {
+          ...category,
+          id: uid("cat"),
+          createdAt: Date.now(),
+        },
+        ...s.categories,
+      ],
+    })),
+
+  updateCategory: (id, patch) =>
+    set((s) => ({
+      categories: s.categories.map((c) =>
+        c.id === id ? { ...c, ...patch } : c
+      ),
+    })),
+
+  removeCategory: (id) =>
+    set((s) => ({
+      categories: s.categories.filter((c) => c.id !== id),
+      expenses: s.expenses.map((e) =>
+        e.category === id
+          ? { ...e, category: "misc" }
+          : e
+      ),
+    })),
 
   // ================= GAMES =================
   recordGamePlay: (gameId, score) =>

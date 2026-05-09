@@ -1,20 +1,20 @@
-import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
+import { useStore } from "@/core/store";
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router";
 import { Check, X, Minus,Plus, Rocket, ChevronLeft, ChevronRight, CalendarCog } from "lucide-react";
-import { useStore } from "@/core/store";
 
+import { Surface } from "@/core/components/Surface";
 import { useHaptics } from "@/core/hooks/useHaptics";
 import { useHydrated } from "@/core/hooks/useHydrated";
-import { Surface } from "@/core/components/Surface";
 import { Signature } from "@/core/components/Signature";
 import { subjectAttendance, overallPercentage, isoToday, isoFromDate, safeSkippable } from "@/features/attendance/logic";
 
+import { Outlet } from "@tanstack/react-router";
 import { isEffectiveHoliday, getHoliday } from "@/features/attendance/holidays";
 import { SubjectManager } from "@/features/attendance/components/SubjectManager";
-import { AttendanceCalendar } from "@/features/attendance/components/AttendanceCalendar";
 import { ExtraClassSheet } from "@/features/attendance/components/ExtraClassSheet";
-import { Outlet } from "@tanstack/react-router";
+import { AttendanceCalendar } from "@/features/attendance/components/AttendanceCalendar";
 
 
 export const Route = createFileRoute("/attendance")({
@@ -133,11 +133,7 @@ function AttendancePage() {
   ? todayExtras
   : [...scheduledSubs, ...todayExtras];
 
-  const hasNormalClasses = scheduledSubs.length > 0;
-
-  const hasExtraClasses = todayExtras.length > 0;
-
-  const shouldShowTopActions = hasNormalClasses || hasExtraClasses || isHoliday;
+  
 
   const allAbsent =
     todaySubs.length > 0 &&
@@ -277,7 +273,7 @@ function AttendancePage() {
               </button>
             </div>
             
-            {shouldShowTopActions && (
+            {(
               <div className="mt-5 flex gap-2 overflow-x-auto no-scrollbar pb-1">
 
                 {/* CHHUTTI */}
