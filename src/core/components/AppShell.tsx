@@ -6,8 +6,10 @@ import { BottomNav } from "./BottomNav";
 import { SideRail } from "./SideRail";
 import {useStore,hydrateStore,startPersistence,} from "@/core/store";
 import { useHydrated } from "@/core/hooks/useHydrated";
+import { GlobalConfirm } from "@/core/components/GlobalConfirm";
 import { App } from "@capacitor/app";
 import { loadAnalyticsUsers } from "@/core/analytics/adminLoader";
+
 export function AppShell({
     children,
   }: {
@@ -290,8 +292,8 @@ export function AppShell({
           </main>
 
           {!isOnboarding && <BottomNav />}
+          <GlobalConfirm />
         </div>
       </div>
     );
   }
-

@@ -30,8 +30,6 @@ export interface Subject {
   credits: number;
   color: string;
   type: SubjectType;
-  // optional override (default 70 for TRACKED)
-  //minAttendancePct?: number;
   startDateISO?: string;
   endDateISO?: string;
 }
@@ -235,6 +233,14 @@ export interface PendingAnalyticsPacket {
   >;
 }
 
+export interface ConfirmState {
+  open: boolean;
+  title: string;
+  message: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 export interface StudentOSState {
   hydrated: boolean;
 
@@ -252,8 +258,35 @@ export interface StudentOSState {
   settings: Settings;
   streaks: Streaks;
   currentSemesterId: string | null;
+  confirm: ConfirmState;
+
+  showConfirm: (c: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }) => void;
+
+  closeConfirm: () => void;
   // UI
   ui: UISlice;
+
+  alertState: {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "alert" | "confirm";
+    _resolve: (value: boolean) => void;
+  };
+
+  showAppAlert: (options: {
+    title: string;
+    message: string;
+    type: "alert" | "confirm";
+    _resolve: (value: boolean) => void;
+  }) => void;
+
+  hideAppAlert: () => void;
 /////////////////////////////////////////////////////////////////////////////////////////
   startSession: () => void;
   initializeAnalytics: () => Promise<void>;
@@ -481,6 +514,53 @@ export const useStore = create<StudentOSState>((set, get) => ({
 
   pendingAnalyticsPackets: [],
 
+
+  confirm: {
+    open: false,
+    title: "",
+    message: "",
+  },
+  alertState: {
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "alert",
+    _resolve: () => {},
+  },
+
+  showConfirm: ({title,message,onConfirm,onCancel,}) =>
+    set({
+      confirm: {
+        open: true,
+        title,
+        message,
+        onConfirm,
+        onCancel,
+      },
+    }),
+
+  closeConfirm: () =>
+    set((s) => ({
+      confirm: {
+        ...s.confirm,
+        open: false,
+      },
+    })),
+  showAppAlert: (options) =>
+  set(() => ({
+    alertState: {
+      ...options,
+      isOpen: true,
+    },
+  })),
+
+  hideAppAlert: () =>
+    set((s) => ({
+      alertState: {
+        ...s.alertState,
+        isOpen: false,
+      },
+    })),
    // ================= THEME =================
   setTheme: (t) => {
     set((s) => ({ settings: { ...s.settings, theme: t } }));

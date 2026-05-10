@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { DayPlan } from "../types";
+import type { DayPlan } from ".././types";
 
 interface Props {
   plan: DayPlan;
@@ -61,7 +61,7 @@ function DayPlanCardBase({ plan }: Props) {
 
         {/* BLOCK PREVIEW */}
         <div className="flex gap-1 overflow-x-auto">
-          {plan.blocks.slice(0, 5).map((b) => (
+          {(plan.blocks ?? []).slice(0, 5).map((b) => (
             <div
               key={b.id}
               className={cn(

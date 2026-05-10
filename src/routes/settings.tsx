@@ -6,6 +6,7 @@ import { useStore, type ThemeId } from "@/core/store";
 import { Surface } from "@/core/components/Surface";
 import { useHaptics } from "@/core/hooks/useHaptics";
 import { Signature } from "@/core/components/Signature";
+import { nativeConfirm } from "@/core/lib/alert";
 
 import { exportData as exportToDevice } from "@/core/utils/export"; // ✅ rename to avoid clash
 
@@ -25,7 +26,7 @@ function SettingsPage() {
   const setSettings = useStore((s) => s.setSettings);
   const setTheme = useStore((s) => s.setTheme);
 
-  const storeExport = useStore((s) => s.exportData); // ✅ renamed
+  const storeExport = useStore((s) => s.exportData);
   const importData = useStore((s) => s.importData);
   const resetAll = useStore((s) => s.resetAll);
 
@@ -39,7 +40,6 @@ function SettingsPage() {
   const addSemester = useStore((s) => s.addSemester);
   const deleteLastSemester = useStore((s) => s.deleteLastSemester);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   // ✅ FINAL EXPORT HANDLER
   const onExport = async () => {
@@ -224,12 +224,25 @@ function SettingsPage() {
         </button>
 
         <button
-          onClick={() => {
+          onClick={async () => {
             if (semesters.length <= 1) {
               haptic("warning");
               return;
             }
-            setConfirmDeleteOpen(true);
+
+            const ok = await nativeConfirm({
+              title: "Delete last semester?",
+              message:
+                "This action cannot be undone.",
+            });
+
+            if (!ok) {
+              haptic("tick");
+              return;
+            }
+
+            deleteLastSemester();
+            haptic("warning");
           }}
           className="mt-2 w-full rounded-2xl bg-destructive/10 text-destructive py-2 text-sm font-semibold"
         >
@@ -237,7 +250,7 @@ function SettingsPage() {
         </button>
 
         {semesters.length <= 1 && (
-          <div className="text-[11px] text-muted-foreground mt-1 text-center">
+          <div className="mt-1 text-center text-[11px] text-muted-foreground">
             No semesters left to delete
           </div>
         )}
@@ -254,25 +267,47 @@ function SettingsPage() {
           onClick={onExport}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-2.5 text-sm font-bold text-primary-foreground"
         >
-          <Download size={14} /> Export backup to Device
+          <Download size={14} /> Export backup
         </button>
 
         <button
           type="button"
-          onClick={onImport}
+          onClick={async () => {
+            const ok = await nativeConfirm({
+              title: "Import backup?",
+              message:
+                "Importing a backup will overwrite your current app data.\n\nExport your current data first if you may need it later.",
+            });
+
+            if (!ok) {
+              haptic("tick");
+              return;
+            }
+
+            onImport();
+          }}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-secondary py-2.5 text-sm font-bold text-secondary-foreground"
         >
-          <Upload size={14} /> Import backup from Device
+          <Upload size={14} /> Import backup
         </button>
 
         <button
           type="button"
-          onClick={() => {
-            if (confirm("Wipe ALL data?")) {
-              resetAll();
-              haptic("error");
-              setStatus("All data wiped");
+          onClick={async () => {
+            const ok = await nativeConfirm({
+              title: "Reset everything?",
+              message:
+                "This will permanently wipe all semesters, attendance, grades, expenses, and settings.",
+            });
+
+            if (!ok) {
+              haptic("tick");
+              return;
             }
+
+            resetAll();
+            haptic("error");
+            setStatus("All data wiped");
           }}
           className="flex w-full items-center justify-center gap-2 rounded-full bg-destructive/10 py-2.5 text-sm font-bold text-destructive"
         >
@@ -335,57 +370,6 @@ function SettingsPage() {
       </Surface>
       
       <Signature page="about" className="pb-2" />
-
-      <AnimatePresence>
-        {confirmDeleteOpen && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm"
-            >
-              <Surface className="p-5 space-y-4">
-                <div className="text-lg font-bold">
-                  Delete last semester?
-                </div>
-
-                <div className="text-sm text-muted-foreground">
-                  This action cannot be undone.
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => {
-                      setConfirmDeleteOpen(false);
-                      haptic("tick");
-                    }}
-                    className="flex-1 rounded-xl bg-surface-2 py-2 text-sm font-semibold"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      deleteLastSemester();
-                      setConfirmDeleteOpen(false);
-                      haptic("warning");
-                    }}
-                    className="flex-1 rounded-xl bg-destructive text-white py-2 text-sm font-semibold"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </Surface>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

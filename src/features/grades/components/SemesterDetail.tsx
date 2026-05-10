@@ -12,6 +12,7 @@ import { GradeRing } from "@/features/grades/components/GradeRing";
 import { RadarChart } from "@/features/grades/components/RadarChart";
 import { SubjectLineGraph } from "@/features/grades/components/SubjectLineGraph";
 import type { Subject } from "@/core/store";
+import { nativeConfirm } from "@/core/lib/alert";
 
 interface SubjectRowProps {
   semId: string;
@@ -58,13 +59,6 @@ const SubjectRow = memo(function SubjectRow({ semId, sub, grade }: SubjectRowPro
                 >
                   <Check size={12} /> Save
                 </button>
-                <button
-                  onClick={() => removeSubject(semId, sub.id)}
-                  aria-label={`Delete ${sub.name}`}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive"
-                >
-                  <Trash2 size={14} />
-                </button>
               </div>
             </div>
           ) : (
@@ -78,6 +72,21 @@ const SubjectRow = memo(function SubjectRow({ semId, sub, grade }: SubjectRowPro
                   className="ml-auto flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
                 >
                   <Pencil size={12} />
+                </button>
+                <button
+                  onClick={async () => {
+                    const ok = await nativeConfirm({
+                      title: "Delete Subject?",
+                      message: `Delete ${sub.name}? This also removes linked attendance, grades, and schedule data.`,
+                    });
+                    if (!ok) return;
+                    removeSubject(semId, sub.id);
+                    haptic("warning");
+                  }}
+                  aria-label={`Delete ${sub.name}`}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive"
+                >
+                  <Trash2 size={14} />
                 </button>
               </div>
               <div className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">

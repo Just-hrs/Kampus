@@ -8,10 +8,19 @@ export type PlannedModeHint =
   | "auto_pilot"
   | "any";
 
+export interface DayPlan {
+  date: string;
+  driftScore: number;
+
+  plannedTotal: number;
+  actualTotal: number;
+
+  blocks: StudyBlock[];
+}
+
 export interface StudyBlock {
   id: string;
-
-  day: string; // ISO date (2026-01-24)
+  day: string;
   type: StudyBlockType;
 
   plannedMin: number;
@@ -19,14 +28,6 @@ export interface StudyBlock {
 
   modeHint: PlannedModeHint;
 
-  label?: string; // optional user text like "Physics grind"
+  label?: string;
   completed?: boolean;
-}
-export interface DayPlan {
-  plannedTotal: number; // minutes planned for the day
-
-  blocks?: {
-    modeHint: string;
-    durationMin: number;
-  }[];
 }

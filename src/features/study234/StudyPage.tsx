@@ -6,11 +6,9 @@ import { getMode, QUICK_START_MODE } from "./data/modes";
 import { useStudyTimer } from "./hooks/useStudyTimer";
 
 import { AmbientBackground } from "./components/AmbientBackground";
-import { StudyHero } from "./components/StudyHero";
 import { StudyTimer } from "./components/StudyTimer";
 import { ModeSelector } from "./components/ModeSelector";
 import { QuickStart } from "./components/QuickStart";
-import { RecoveryCard } from "./components/RecoveryCard";
 import { FocusStats } from "./components/FocusStats";
 import { Heatmap } from "./components/Heatmap";
 import { SessionMoodSheet } from "./components/SessionMoodSheet";
@@ -168,10 +166,6 @@ export default function StudyPage() {
         animate={{ opacity: 1 }}
         className="mx-auto w-full max-w-3xl px-4 py-8 space-y-8"
       >
-        {/* HERO */}
-        <StudyHero totalSessions={stats.total} streak={stats.streak} />
-
-        {daysAway >= 3 && <RecoveryCard daysAway={daysAway} />}
 
         {/* TIMER */}
         <section className="rounded-3xl border border-border/40 bg-card/50 p-6 backdrop-blur-xl">

@@ -5,7 +5,7 @@ import { useHaptics } from "@/core/hooks/useHaptics";
 import { Surface } from "@/core/components/Surface";
 import { isoFromDate, isoToday } from "@/features/attendance/logic";
 import { getHoliday, isEffectiveHoliday } from "@/features/attendance/holidays";
-
+import { nativeConfirm } from "@/core/lib/alert";
 interface Props {
   semesterId: string;
 }
@@ -92,7 +92,7 @@ export function AttendanceCalendar({ semesterId }: Props) {
     cells.push({ day: d, iso: isoFromDate(date), weekday: date.getDay() });
   }
 
-  const handleCellClick = (iso: string, weekday: number) => {
+  const handleCellClick = async(iso: string, weekday: number) => {
     const isHol = isEffectiveHoliday(iso, holidayOverrides);
     const isScheduled = scheduledDays.has(weekday) && !isHol;
     const key = `${iso}_${activeSubject.id}`;
@@ -101,22 +101,45 @@ export function AttendanceCalendar({ semesterId }: Props) {
 
     if (isHol && !cur && !hasExtra) {
       const hol = getHoliday(iso);
-      const ok = confirm(
-        `Chhutti hai so ja 😴 — ${hol?.name ?? "Holiday"}.\n\nNah, it's a misunderstanding — today there are classes?`,
-      );
+
+      const ok = await nativeConfirm({
+        title: "Holiday detected",
+        message: `Chhutti hai so ja 😴 — ${hol?.name ?? "Holiday"}.\n\nNah, it's a misunderstanding — today there are classes?`,
+      });
+
       if (!ok) return;
+
       setHolidayOverride(iso, "working");
       haptic("warning");
       return;
     }
     if (!isScheduled && !cur && !hasExtra) {
-      if (!confirm("Extra class? Add this class for today?")) return;
-      addExtraClass({ dateISO: iso, subjectId: activeSubject.id });
+      const ok = await nativeConfirm({
+        title: "Extra class?",
+        message:
+          `No class was scheduled for today.\n\n` +
+          `Add an extra ${activeSubject.name} class and mark attendance?`,
+      });
+
+      if (!ok) return;
+
+      addExtraClass({
+        dateISO: iso,
+        subjectId: activeSubject.id,
+      });
+
       setAtt(iso, activeSubject.id, mode);
+
       haptic("tick");
       return;
     }
-    setAtt(iso, activeSubject.id, cur === mode ? null : mode);
+
+    setAtt(
+      iso,
+      activeSubject.id,
+      cur === mode ? null : mode,
+    );
+
     haptic("tick");
   };
 

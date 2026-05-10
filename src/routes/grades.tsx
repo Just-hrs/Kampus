@@ -14,6 +14,7 @@ import { SGPAChart } from "@/features/grades/components/SGPAChart";
 import { TargetPanel } from "@/features/grades/components/TargetPanel";
 import { SemesterComparison } from "@/features/grades/components/SemesterComparison";
 import { Signature } from "@/core/components/Signature";
+import { SGPARadar } from "@/features/grades/components/SGPARadar";
 
 export const Route = createFileRoute("/grades")({
   component: GradesPage,
@@ -113,6 +114,7 @@ function GradesPage() {
             exit={{ opacity: 0, x: 10 }}
             className="space-y-4"
           >
+            <SGPARadar semesters={semesters} totalSemesters={totalSemesters}/>
             <SGPAChart trend={trend} />
             <TargetPanel cgpa={cgpa} semesters={semesters} totalSemesters={totalSemesters} />
             <SemesterComparison />

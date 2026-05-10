@@ -4,6 +4,7 @@ import { useStore, type Subject } from "@/core/store";
 import { useHaptics } from "@/core/hooks/useHaptics";
 import { Surface } from "@/core/components/Surface";
 import { RingProgress } from "@/core/components/RingProgress";
+import { nativeConfirm } from "@/core/lib/alert";
 import {isoToday,overallPercentage,recoveryClasses,safeSkippable,subjectAttendance} from "@/features/attendance/logic";
 
 interface Props {
@@ -181,66 +182,64 @@ export function SubjectManager({ semesterId }: Props) {
                   />
                 </div>
               </label>
+              {/* type */}
               <label className="space-y-1">
-  <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-    Type
-  </span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                  Type
+                </span>
 
-  <div className="relative">
-    <button
-      type="button"
-      onClick={() => setOpen((v) => !v)}
-      className="flex w-full items-center justify-between rounded-2xl bg-input px-4 py-2.5 text-sm"
-    >
-      <span>
-        {type === "CORE"
-          ? "Core"
-          : type === "TRACKED"
-          ? "Tracked (70%)"
-          : "Ignore"}
-      </span>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setOpen((v) => !v)}
+                    className="flex w-full items-center justify-between rounded-2xl bg-input px-4 py-2.5 text-sm"
+                  >
+                    <span>
+                      {type === "CORE"
+                        ? "Core"
+                        : type === "TRACKED"
+                        ? "Tracked"
+                        : "Ignore"}
+                    </span>
 
-      <span className="text-muted-foreground">▾</span>
-    </button>
+                    <span className="text-muted-foreground">▾</span>
+                  </button>
 
-    {open && (
-      <>
-        <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
-          {(["CORE", "TRACKED", "IGNORE"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => {
-                setType(t);
-                setOpen(false);
-              }}
-              className={`w-full px-4 py-2.5 text-left text-sm ${
-                type === t
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-surface-2"
-              }`}
-            >
-              {t === "CORE"
-                ? "Core"
-                : t === "TRACKED"
-                ? "Tracked"
-                : "Ignore"}
-            </button>
-          ))}
-        </div>
+                  {open && (
+                    <>
+                      <div className="absolute z-50 mt-2 w-full overflow-hidden rounded-2xl border border-border bg-surface shadow-lg">
+                        {(["CORE", "TRACKED", "IGNORE"] as const).map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => {
+                              setType(t);
+                              setOpen(false);
+                            }}
+                            className={`w-full px-4 py-2.5 text-left text-sm ${
+                              type === t
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-surface-2"
+                            }`}
+                          >
+                            {t === "CORE"
+                              ? "Core"
+                              : t === "TRACKED"
+                              ? "Tracked"
+                              : "Ignore"}
+                          </button>
+                        ))}
+                      </div>
 
-        {/* click outside */}
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setOpen(false)}
-        />
-      </>
-    )}
-  </div>
-</label>
-              
-
-              
+                      {/* click outside */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setOpen(false)}
+                      />
+                    </>
+                  )}
+                </div>
+              </label>
             </div>
 
             <button
@@ -298,34 +297,33 @@ export function SubjectManager({ semesterId }: Props) {
 
                 haptic("success");
               }}
-              onRemove={() => {
-                if (
-                  confirm(
-                    `Pakka?  Delete ${r.subject.name}? This removes its grade and schedule. it can't be undone do only if wrong`,
-                  )
-                ) {
-                  removeSubject(
-                    sem.id,
-                    r.subject.id,
-                  );
-
-                  haptic("warning");
-                }
+              onRemove={async () => {
+                const ok = await nativeConfirm({
+                  title: "Delete Subject?",
+                  message: `Pakka? Delete ${r.subject.name}? This removes its grade and schedule. It can't be undone.`,
+                });
+                if (!ok) return;
+                removeSubject(
+                  sem.id,
+                  r.subject.id,
+                );      
+                haptic("warning");
               }}
-              onEndClasses={() => {
-                if (
-                  confirm(
-                    `Mark ${r.subject.name} as ended?`,
-                  )
-                ) {
-                  endSubjectClasses(
-                    sem.id,
-                    r.subject.id,
-                    isoToday(),
-                  );
+              onEndClasses={async () => {
+                const ok = await nativeConfirm({
+                  title: "End Subject?",
+                  message: `Mark ${r.subject.name} as ended?`,
+                });
 
-                  haptic("tick");
-                }
+                if (!ok) return;
+
+                endSubjectClasses(
+                  sem.id,
+                  r.subject.id,
+                  isoToday(),
+                );
+
+                haptic("tick");
               }}
             />
           ))
@@ -364,6 +362,7 @@ function SubjectItem({
   onRemove,
   onEndClasses,
 }: ItemProps) {
+  const [openTypeId, setOpenTypeId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
 
   const [name, setName] = useState(sub.name);
@@ -402,17 +401,31 @@ function SubjectItem({
   return (
     <Surface className="p-4">
       {editing ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* NAME */}
           <input
             value={name}
             onChange={(e) =>
               setName(e.target.value)
             }
-            className="w-full rounded-2xl bg-input px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Subject name"
+            className="
+              w-full rounded-2xl
+              border border-border
+              bg-input
+              px-4 py-3
+              text-sm text-foreground
+              outline-none
+              transition-colors
+              placeholder:text-muted-foreground
+              focus:border-primary/50
+              focus:ring-2 focus:ring-ring
+            "
           />
 
-          <div className="grid grid-cols-2 gap-2">
-            <label className="space-y-1">
+          {/* DATES */}
+          <div className="grid grid-cols-2 gap-3">
+            <label className="space-y-1.5">
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                 Start
               </span>
@@ -423,11 +436,21 @@ function SubjectItem({
                 onChange={(e) =>
                   setStart(e.target.value)
                 }
-                className="w-full rounded-2xl bg-input px-3 py-2 text-xs outline-none"
+                className="
+                  w-full rounded-2xl
+                  border border-border
+                  bg-input
+                  px-3 py-2.5
+                  text-xs text-foreground
+                  outline-none
+                  transition-colors
+                  focus:border-primary/50
+                  focus:ring-2 focus:ring-ring
+                "
               />
             </label>
 
-            <label className="space-y-1">
+            <label className="space-y-1.5">
               <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                 End
               </span>
@@ -438,96 +461,254 @@ function SubjectItem({
                 onChange={(e) =>
                   setEnd(e.target.value)
                 }
-                className="w-full rounded-2xl bg-input px-3 py-2 text-xs outline-none"
+                className="
+                  w-full rounded-2xl
+                  border border-border
+                  bg-input
+                  px-3 py-2.5
+                  text-xs text-foreground
+                  outline-none
+                  transition-colors
+                  focus:border-primary/50
+                  focus:ring-2 focus:ring-ring
+                "
               />
             </label>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 rounded-2xl bg-input px-2 py-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setCredits(
-                    Math.max(1, credits - 1),
-                  )
-                }
-                className="h-8 w-8 rounded-xl bg-surface"
-              >
-                −
-              </button>
+          {/* CONTROLS */}
+          <div className="flex items-start justify-between gap-3">
+            {/* CREDITS */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                Credits
+              </span>
 
-              <div className="w-8 text-center text-sm font-bold">
-                {credits}
+              <div
+                className="
+                  flex items-center gap-2
+                  rounded-2xl
+                  border border-border
+                  bg-input
+                  px-2 py-2
+                "
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCredits(
+                      Math.max(
+                        1,
+                        credits - 1,
+                      ),
+                    )
+                  }
+                  className="
+                    flex h-8 w-8 items-center justify-center
+                    rounded-xl
+                    border border-border
+                    bg-background
+                    text-sm
+                    transition-colors
+                    hover:bg-muted
+                    active:scale-95
+                  "
+                >
+                  −
+                </button>
+
+                <div className="w-8 text-center text-sm font-bold text-foreground">
+                  {credits}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCredits(
+                      Math.min(
+                        8,
+                        credits + 1,
+                      ),
+                    )
+                  }
+                  className="
+                    flex h-8 w-8 items-center justify-center
+                    rounded-xl
+                    border border-border
+                    bg-background
+                    text-sm
+                    transition-colors
+                    hover:bg-muted
+                    active:scale-95
+                  "
+                >
+                  +
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setCredits(
-                    Math.min(8, credits + 1),
-                  )
-                }
-                className="h-8 w-8 rounded-xl bg-surface"
-              >
-                +
-              </button>
             </div>
 
-            <div className="space-y-1">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+            {/* TYPE */}
+            <label className="flex-1 space-y-1.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                 Type
-              </div>
+              </span>
 
-              <div className="flex gap-2">
-                {(["CORE", "TRACKED", "IGNORE"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => onEdit({ type: t })}
-                    className={`rounded-xl px-3 py-1 text-[11px] transition ${
-                      sub.type === t
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-input text-muted-foreground"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenTypeId(
+                      openTypeId === sub.id
+                        ? null
+                        : sub.id,
+                    )
+                  }
+                  className="
+                    flex w-full items-center justify-between
+                    rounded-2xl
+                    border border-border
+                    bg-input
+                    px-4 py-2.5
+                    text-sm text-foreground
+                    transition-colors
+                    hover:border-primary/40
+                  "
+                >
+                  <span>
+                    {sub.type === "CORE"
+                      ? "Core"
+                      : sub.type ===
+                        "TRACKED"
+                      ? "Tracked"
+                      : "Ignore"}
+                  </span>
+
+                  <span className="text-muted-foreground">
+                    ▾
+                  </span>
+                </button>
+
+                {openTypeId === sub.id && (
+                  <>
+                    <div
+                      className="
+                        absolute z-50 mt-2 w-full overflow-hidden
+                        rounded-2xl
+                        border border-border
+                        bg-popover
+                        shadow-2xl
+                        backdrop-blur-xl
+                      "
+                    >
+                      {(
+                        [
+                          "CORE",
+                          "TRACKED",
+                          "IGNORE",
+                        ] as const
+                      ).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            onEdit({
+                              type: t,
+                            });
+
+                            setOpenTypeId(
+                              null,
+                            );
+                          }}
+                          className={`
+                            w-full px-4 py-3
+                            text-left text-sm
+                            transition-colors
+                            ${
+                              sub.type === t
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
+                            }
+                          `}
+                        >
+                          {t === "CORE"
+                            ? "Core"
+                            : t ===
+                              "TRACKED"
+                            ? "Tracked"
+                            : "Ignore"}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* outside click */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() =>
+                        setOpenTypeId(
+                          null,
+                        )
+                      }
+                    />
+                  </>
+                )}
               </div>
-            </div>
+            </label>
           </div>
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setEditing(false)}
-                className="rounded-2xl px-4 py-2 text-xs surface-glass"
-              >
-                Cancel
-              </button>
+          {/* ACTIONS */}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() =>
+                setEditing(false)
+              }
+              className="
+                rounded-2xl
+                border border-border
+                bg-card
+                px-4 py-2
+                text-xs font-medium
+                text-foreground
+                transition-colors
+                hover:bg-muted
+              "
+            >
+              Cancel
+            </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!name.trim()) return;
+            <button
+              type="button"
+              onClick={() => {
+                if (!name.trim()) return;
 
-                  onEdit({
-                    name: name.trim(),
-                    credits,
-                    startDateISO: start || undefined,
-                    endDateISO: end || undefined,
-                    type: sub.type,
-                  });
+                onEdit({
+                  name: name.trim(),
+                  credits,
+                  startDateISO:
+                    start || undefined,
+                  endDateISO:
+                    end || undefined,
+                  type: sub.type,
+                });
 
-                  setEditing(false);
-                }}
-                className="flex items-center gap-1 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"
-              >
-                <Check size={12} />
-                Save
-              </button>
-            </div>
+                setEditing(false);
+              }}
+              className="
+                flex items-center gap-1.5
+                rounded-2xl
+                bg-primary
+                px-4 py-2
+                text-xs font-bold
+                text-primary-foreground
+                transition-opacity
+                hover:opacity-90
+                active:scale-[0.98]
+              "
+            >
+              <Check size={12} />
+              Save
+            </button>
+          </div>
         </div>
       ) : (
         <div className="flex items-start gap-4">
@@ -553,14 +734,29 @@ function SubjectItem({
                 >
                   {sub.name}
                 </div>
-
                 <div className="mt-0.5 text-[11px] text-muted-foreground">
                   {present}P · {absent}A · {total} held
                   {" · "}
                   {sub.credits} credits
                 </div>
               </div>
-
+              <div className="mt-1 flex items-center gap-2">
+                <span
+                  className={`
+                    rounded-full px-2 py-0.5
+                    text-[10px] font-bold uppercase tracking-wide
+                    ${
+                      sub.type === "CORE"
+                        ? "bg-primary/15 text-primary"
+                        : sub.type === "TRACKED"
+                        ? "bg-warning/15 text-warning"
+                        : "bg-muted text-muted-foreground"
+                    }
+                  `}
+                >
+                  {sub.type}
+                </span>
+              </div>
               <div className="flex items-center">
                 <button
                   type="button"
