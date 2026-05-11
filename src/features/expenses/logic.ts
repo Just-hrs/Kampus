@@ -66,3 +66,119 @@ export function dailyThisMonth(expenses: Expense[], year: number, month: number)
   }
   return arr;
 }
+
+
+export function spendingPersonality(
+  necessary: number,
+  unnecessary: number
+) {
+  const total = necessary + unnecessary;
+
+  if (total === 0) {
+    return {
+      title: "No data yet",
+      message: "Track a few expenses to unlock patterns.",
+    };
+  }
+
+  const vibeRatio = unnecessary / total;
+
+  if (vibeRatio >= 0.75) {
+    return {
+      title: "Certified dopamine investor",
+      message:
+        "Most of your money goes toward instant gratification.",
+    };
+  }
+
+  if (vibeRatio >= 0.55) {
+    return {
+      title: "Emotion-driven spender",
+      message:
+        "Your wants are quietly overpowering your needs.",
+    };
+  }
+
+  if (vibeRatio >= 0.35) {
+    return {
+      title: "Balanced spender",
+      message:
+        "You spend on fun without completely losing control.",
+    };
+  }
+
+  return {
+    title: "Disciplined allocator",
+    message:
+      "Most spending supports survival, growth, or long-term goals.",
+  };
+}
+
+export function biggestCategory(
+  categories: Record<string, number>
+) {
+  let winner = "";
+  let max = 0;
+
+  for (const key in categories) {
+    if (categories[key] > max) {
+      max = categories[key];
+      winner = key;
+    }
+  }
+
+  return {
+    category: winner,
+    amount: max,
+  };
+}
+
+export function spendingWarning(
+  total: number,
+  budget: number
+) {
+  if (budget <= 0) {
+    return {
+      level: "none",
+      text: "No monthly budget set.",
+    };
+  }
+
+  const ratio = total / budget;
+
+  if (ratio >= 1.3) {
+    return {
+      level: "danger",
+      text: "Financial violence detected.",
+    };
+  }
+
+  if (ratio >= 1) {
+    return {
+      level: "warn",
+      text: "You crossed your budget.",
+    };
+  }
+
+  if (ratio >= 0.8) {
+    return {
+      level: "mid",
+      text: "You're entering overspend territory.",
+    };
+  }
+
+  return {
+    level: "good",
+    text: "Budget usage healthy.",
+  };
+}
+
+export function burnRateProjection(
+  total: number,
+  currentDay: number,
+  daysInMonth: number
+) {
+  if (currentDay === 0) return total;
+
+  return (total / currentDay) * daysInMonth;
+}

@@ -64,10 +64,10 @@ export interface ExpenseCategoryItem {
 export interface Expense {
   id: string;
   amount: number;
-  category: ExpenseCategory;
+  category: string;
   necessary: boolean;
   note?: string;
-  dateISO: string; // YYYY-MM-DD
+  dateISO: string;
   createdAt: number;
 }
 

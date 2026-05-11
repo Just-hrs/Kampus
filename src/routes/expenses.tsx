@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, Pencil, Check, ChevronDown } from "lucide-react";
 import { useStore, type ExpenseCategory } from "@/core/store";
 import { useHaptics } from "@/core/hooks/useHaptics";
 import { useHydrated } from "@/core/hooks/useHydrated";
@@ -36,6 +36,16 @@ function ExpensesPage() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
   const [editMode, setEditMode] = useState(false);
+  const [categoryEditMode, setCategoryEditMode] = useState(false);
+  const [newCatLabel, setNewCatLabel] = useState("");
+  const [newCatEmoji, setNewCatEmoji] = useState("🤨")
+  const [openMonth, setOpenMonth] = useState(false);;
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+
+  const [tempCategory, setTempCategory] = useState<{
+    label: string;
+    emoji: string;
+  } | null>(null);
   const total = monthlyTotal(expenses, selectedYear, selectedMonth);
   const { necessary, unnecessary } = necessaryUnnecessary(expenses, selectedYear, selectedMonth);
   const cats = byCategory(expenses, selectedYear, selectedMonth);
@@ -50,6 +60,20 @@ function ExpensesPage() {
 
   const pctBudget = budget > 0 ? Math.min(100, (total / budget) * 100) : 0;
   const necPct = total > 0 ? (necessary / total) * 100 : 0;
+
+  const months = Array.from({ length: 36 }).map((_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 18 + i);
+
+    return {
+      month: d.getMonth(),
+      year: d.getFullYear(),
+      label: d.toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      }),
+    };
+  });
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 px-4 pt-2 pb-24">
@@ -133,103 +157,169 @@ function ExpensesPage() {
       </Surface>
 
       {/* By Category */}
+      
       <Surface className="p-4">
-        <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">
-          By Category 
-          <Surface className="p-3">
-            <div className="flex gap-2">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="flex-1 rounded-xl bg-surface-2 px-3 py-2 text-sm"
-              >
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <option key={i} value={i}>
-                    {new Date(2026, i).toLocaleString("default", {
-                      month: "long",
-                    })}
-                  </option>
-                ))}
-              </select>
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+            By Category
+          </div>
 
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="rounded-xl bg-surface-2 px-3 py-2 text-sm"
-              >
-                {Array.from({ length: 6 }).map((_, i) => {
-                  const y = 2024 + i;
+          <button
+            onClick={() => setEditMode((v) => !v)}
+            className="flex items-center gap-1 text-xs font-bold text-primary"
+          >
+            {editMode ? (
+              <>
+                <Check size={14} />
+                Done
+              </>
+            ) : (
+              <>
+                <Pencil size={14} />
+                Edit
+              </>
+            )}
+          </button>
+        </div>
+        <div className="mb-3 flex justify-end">
+          <Surface className="relative p-2 w-fit">
+            {/* trigger */}
+            <button
+              onClick={() => setOpenMonth((v: boolean) => !v)}
+              className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm whitespace-nowrap"
+            >
+              {new Date(selectedYear, selectedMonth).toLocaleString(
+                "default",
+                { month: "short", year: "numeric" }
+              )}
+              <ChevronDown size={14} />
+            </button>
+
+            {/* dropdown */}
+            {openMonth && (
+              <div className="absolute right-0 mt-2 w-44 max-h-60 overflow-y-auto rounded-xl bg-surface-2 border border-border shadow-lg z-50">
+                {Array.from({ length: 36 }).map((_, i) => {
+                  const d = new Date(2024, i);
+                  const m = d.getMonth();
+                  const y = d.getFullYear();
+
+                  const label = d.toLocaleString("default", {
+                    month: "short",
+                    year: "numeric",
+                  });
+
+                  const active =
+                    m === selectedMonth && y === selectedYear;
+
                   return (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setSelectedMonth(m);
+                        setSelectedYear(y);
+                        setOpenMonth(false);
+                      }}
+                      className={`
+                        w-full text-left px-3 py-2 text-sm
+                        hover:bg-surface-3
+                        ${active ? "bg-primary text-primary-foreground" : ""}
+                      `}
+                    >
+                      {label}
+                    </button>
                   );
                 })}
-              </select>
-            </div>
+              </div>
+            )}
           </Surface>
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {categories.map((catObj) => {
             const c = catObj.id;
             const v = cats[c] ?? 0;
-            const meta = catObj;
             return (
               <div key={c} className="relative rounded-[var(--radius-2)] bg-surface-2 p-2">
+
+                {/* DELETE ICON (top-right, ONLY in edit mode) */}
+                {/* {editMode && (
+                  <button
+                    onClick={() => removeCategory(c)}
+                    className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )} */}
+
+                {/* CONTENT */}
                 <div className="flex items-center gap-1.5 text-xs font-semibold">
+
+                  {/* EMOJI */}
                   {editMode ? (
                     <input
-                      value={meta.emoji}
+                      value={catObj.emoji}
                       maxLength={2}
                       onChange={(e) =>
-                        updateCategory(c, {
-                          emoji: e.target.value,
-                        })
+                        updateCategory(c, { emoji: e.target.value })
                       }
                       className="w-10 bg-transparent text-center"
                     />
                   ) : (
-                    <span>{meta.emoji}</span>
+                    <span>{catObj.emoji}</span>
                   )}
+
+                  {/* LABEL */}
                   {editMode ? (
                     <input
-                      value={meta.label}
+                      value={catObj.label}
                       onChange={(e) =>
-                        updateCategory(c, {
-                          label: e.target.value,
-                        })
+                        updateCategory(c, { label: e.target.value })
                       }
                       className="w-full bg-transparent outline-none"
                     />
                   ) : (
-                    <span>{meta.label}</span>
-                  )}
-                  {editMode && (
-                    <button
-                      onClick={() => removeCategory(c)}
-                      className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    <span>{catObj.label}</span>
                   )}
                 </div>
                 <div className="mt-1 font-display font-bold">{formatINR(v)}</div>
               </div>
             );
           })}
-          <button
-            onClick={() =>
-            addCategory({
-              label: "New",
-              emoji: "✨",
-              color: "var(--chart-1)",
-              })
-            }
-            className="rounded-[var(--radius-2)] border border-dashed border-border p-3 text-sm"
-          >
-            + Add Category
-          </button>
+          
         </div>
+        {editMode && (
+          <div className="col-span-full mt-3 flex gap-2">
+            <input
+              value={newCatLabel}
+              onChange={(e) => setNewCatLabel(e.target.value)}
+              placeholder="Category name"
+              className="flex-1 rounded-xl bg-surface-2 px-3 py-2 text-sm"
+            />
+
+            <input
+              value={newCatEmoji}
+              onChange={(e) => setNewCatEmoji(e.target.value)}
+              className="w-14 rounded-xl bg-surface-2 px-2 py-2 text-center"
+            />
+
+            <button
+              onClick={() => {
+                if (!newCatLabel.trim()) return;
+
+                addCategory({
+                  label: newCatLabel.trim(),
+                  emoji: newCatEmoji || "🤨",
+                  color: "var(--chart-1)",
+                });
+
+                setNewCatLabel("");
+                setNewCatEmoji("🤨");
+              }}
+              className="rounded-xl px-3 py-2 bg-primary text-primary-foreground"
+            >
+              Add
+            </button>
+          </div>
+        )}
       </Surface>
 
       {/* Recent */}
